@@ -1,4 +1,4 @@
-package com.example.shujinko
+package com.shujinko.app
 
 import org.junit.Test
 
