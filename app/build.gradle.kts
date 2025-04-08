@@ -70,4 +70,10 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.03.00"))
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    // Coil - 이미지 로딩용
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    // Activity Result API
+    implementation("androidx.activity:activity-compose:1.7.2")
 }
