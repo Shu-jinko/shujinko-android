@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,34 +17,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.shujinko.app.viewmodel.ImagePickerViewModel
+import com.shujinko.app.viewmodel.MultiImageViewModel
 
 @Composable
-fun ImagePickerScreen(viewModel: ImagePickerViewModel = viewModel()) {
+fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {
     val context = LocalContext.current
-    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
+    val imageList by viewModel.images.collectAsState()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        // 생략: 권한 결과는 여기서 받아 처리 가능
-    }
+    ) {}
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.setImageUri(it) }
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        viewModel.addImages(context, uris)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(24.dp)
     ) {
-        Text("📸 사진을 선택해보세요", style = MaterialTheme.typography.headlineSmall)
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Text("📸 여러 장 이미지 선택 테스트", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -52,17 +50,29 @@ fun ImagePickerScreen(viewModel: ImagePickerViewModel = viewModel()) {
             }
             imagePickerLauncher.launch("image/*")
         }) {
-            Text("앨범 열기")
+            Text("이미지 선택하기")
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        selectedImageUri?.let {
-            Image(
-                painter = rememberAsyncImagePainter(it),
-                contentDescription = "선택한 이미지",
-                modifier = Modifier.size(300.dp)
-            )
+        LazyColumn {
+            items(imageList) { image ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(image.uri),
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("이름: ${image.name}")
+                        Text("크기: ${image.sizeKb} KB")
+                    }
+                }
+            }
         }
     }
 }

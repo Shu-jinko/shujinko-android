@@ -3,7 +3,7 @@ package com.shujinko.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.shujinko.app.ui.screen.ImagePickerScreen
+import com.shujinko.app.ui.screen.MultiImagePickerScreen
 import com.shujinko.app.ui.theme.ShujinkoTheme
 
 class MainActivity : ComponentActivity() {
@@ -11,7 +11,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ShujinkoTheme {
-                ImagePickerScreen()
+                MultiImagePickerScreen()
             }
         }
     }
