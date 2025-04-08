@@ -3,7 +3,11 @@ package com.shujinko.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.shujinko.app.ui.screen.MultiImagePickerScreen
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
+import com.shujinko.app.navigation.ShujinkoNavGraph
 import com.shujinko.app.ui.theme.ShujinkoTheme
 
 class MainActivity : ComponentActivity() {
@@ -11,7 +15,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ShujinkoTheme {
-                MultiImagePickerScreen()
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    val navController = rememberNavController()
+                    ShujinkoNavGraph(navController)
+                }
             }
         }
     }
