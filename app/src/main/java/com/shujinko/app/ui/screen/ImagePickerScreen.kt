@@ -68,8 +68,10 @@ fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("이름: ${image.name}")
-                        Text("크기: ${image.sizeKb} KB")
+                        Text("🖼 ${image.name}")
+                        Text("📏 ${image.sizeKb} KB")
+                        Text("📅 ${image.dateTaken ?: "촬영 시각 없음"}")
+                        Text("📍 ${if (image.latitude != null && image.longitude != null) "${image.latitude}, ${image.longitude}" else "위치 없음"}")
                     }
                 }
             }

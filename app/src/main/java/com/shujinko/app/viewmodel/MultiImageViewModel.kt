@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import com.shujinko.app.data.ImageItem
+import com.shujinko.app.utils.extractExifInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -21,7 +22,10 @@ class MultiImageViewModel : ViewModel() {
                 cursor.moveToFirst()
                 val name = cursor.getString(nameIndex)
                 val size = cursor.getLong(sizeIndex) / 1024
-                ImageItem(uri, name, size)
+
+                val (dateTaken, latitude, longitude) = extractExifInfo(context, uri)
+
+                ImageItem(uri, name, size, dateTaken, latitude, longitude)
             }
         }
         _images.value = list
