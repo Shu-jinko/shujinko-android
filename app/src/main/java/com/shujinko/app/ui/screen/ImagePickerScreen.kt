@@ -1,7 +1,6 @@
 package com.shujinko.app.ui.screen
 
 import android.Manifest
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.shujinko.app.viewmodel.MultiImageViewModel
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 
 @Composable
 fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {
@@ -76,5 +78,27 @@ fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {
                 }
             }
         }
+
+        val hasAnyLocation = imageList.any { it.latitude != null && it.longitude != null }
+
+        if (!hasAnyLocation && imageList.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "❗사진 위치 정보를 불러올 수 없어요.\n앱 설정에서 권한을 허용해야 할 수 있어요.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { openAppSettings(context) }) {
+                Text("앱 설정으로 이동하기")
+            }
+        }
     }
+}
+
+fun openAppSettings(context: android.content.Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+    context.startActivity(intent)
 }
