@@ -14,7 +14,7 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Shujinko") },
+                title = { Text("Shujinko 앱 정보 추출 데모") },
             )
         }
     ) { innerPadding ->
@@ -37,8 +37,8 @@ fun HomeScreen(navController: NavController) {
                     modifier = Modifier.weight(1f)
                 )
                 FourCutButton(
-                    label = "2번",
-                    onClick = { /* TODO */ },
+                    label = "앱 사용 기록 불러오기",
+                    onClick = { navController.navigate(Routes.USAGE_STATS) },
                     modifier = Modifier.weight(1f)
                 )
             }
