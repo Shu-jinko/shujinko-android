@@ -21,6 +21,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {
     val context = LocalContext.current
@@ -36,61 +37,99 @@ fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {
         viewModel.addImages(context, uris)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-        Text("📸 여러 장 이미지 선택 테스트", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-            } else {
-                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-            imagePickerLauncher.launch("image/*")
-        }) {
-            Text("이미지 선택하기")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("이미지 정보 보기") }
+            )
         }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp),
+        ) {
+            Button(
+                onClick = {
+                    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                        Manifest.permission.READ_MEDIA_IMAGES
+                    else
+                        Manifest.permission.READ_EXTERNAL_STORAGE
 
-        Spacer(modifier = Modifier.height(24.dp))
+                    permissionLauncher.launch(permission)
+                    imagePickerLauncher.launch("image/*")
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("📂 이미지 선택하기")
+            }
 
-        LazyColumn {
-            items(imageList) { image ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(8.dp)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (imageList.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(image.uri),
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text("🖼 ${image.name}")
-                        Text("📏 ${image.sizeKb} KB")
-                        Text("📅 ${image.dateTaken ?: "촬영 시각 없음"}")
-                        Text("📍 ${if (image.latitude != null && image.longitude != null) "${image.latitude}, ${image.longitude}" else "위치 없음"}")
+                    Text("선택된 이미지가 없습니다.", style = MaterialTheme.typography.bodyLarge)
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(imageList) { image ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(image.uri),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .aspectRatio(1f)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(image.name)
+                                    Text("크기: ${image.sizeKb} KB")
+                                    Text("촬영일: ${image.dateTaken ?: "정보 없음"}")
+                                    Text("위치: ${
+                                        if (image.latitude != null && image.longitude != null)
+                                            "${image.latitude}, ${image.longitude}"
+                                        else "없음"
+                                    }")
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        val hasAnyLocation = imageList.any { it.latitude != null && it.longitude != null }
-
-        if (!hasAnyLocation && imageList.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "❗사진 위치 정보를 불러올 수 없어요.\n앱 설정에서 권한을 허용해야 할 수 있어요.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { openAppSettings(context) }) {
-                Text("앱 설정으로 이동하기")
+                val hasAnyLocation = imageList.any { it.latitude != null && it.longitude != null }
+                if (!hasAnyLocation) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "❗ 위치 정보가 없습니다",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(onClick = { openAppSettings(context) }) {
+                            Text("앱 권한 설정 열기")
+                        }
+                    }
+                }
             }
         }
     }

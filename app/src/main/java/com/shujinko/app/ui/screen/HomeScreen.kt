@@ -1,10 +1,16 @@
 package com.shujinko.app.ui.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.shujinko.app.navigation.Routes
 
@@ -14,7 +20,13 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Shujinko 앱 정보 추출 데모") },
+                title = {
+                    Text(
+                        text = "Shujinko",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                }
             )
         }
     ) { innerPadding ->
@@ -23,38 +35,45 @@ fun HomeScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = "사용자 스마트폰 데이터 수집",
+                style = MaterialTheme.typography.titleMedium
+            )
+
             Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                FourCutButton(
-                    label = "사진 정보 불러오기",
+                HomeActionCard(
+                    label = "사진 정보",
+                    icon = Icons.Default.Face,
                     onClick = { navController.navigate(Routes.IMAGE_PICKER) },
                     modifier = Modifier.weight(1f)
                 )
-                FourCutButton(
-                    label = "앱 사용 기록 불러오기",
+                HomeActionCard(
+                    label = "앱 사용 기록",
+                    icon = Icons.Default.ShoppingCart,
                     onClick = { navController.navigate(Routes.USAGE_STATS) },
                     modifier = Modifier.weight(1f)
                 )
             }
+
             Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                FourCutButton(
-                    label = "3번",
+                HomeActionCard(
+                    label = "GOOGLE CALENDAR",
+                    icon = Icons.Default.DateRange,
                     onClick = { /* TODO */ },
                     modifier = Modifier.weight(1f)
                 )
-                FourCutButton(
-                    label = "4번",
+                HomeActionCard(
+                    label = "GOOGLE TODO",
+                    icon = Icons.Default.Build,
                     onClick = { /* TODO */ },
                     modifier = Modifier.weight(1f)
                 )
@@ -63,16 +82,37 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FourCutButton(
+fun HomeActionCard(
     label: String,
+    icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Button(
+    Card(
         onClick = onClick,
-        modifier = modifier.fillMaxHeight()
+        modifier = modifier
+            .height(150.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Text(label)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(text = label, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
