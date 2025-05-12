@@ -13,13 +13,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.shujinko.app.viewmodel.LoginViewModel
+import com.shujinko.app.R
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
     val context = LocalContext.current
 
+    // Google Sign-In Options 설정
+    val gso = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+    }
+
+    val signInClient = remember { GoogleSignIn.getClient(context, gso) }
+
+    // Activity Result Launcher
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -27,15 +40,19 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
         try {
             val account = task.getResult(ApiException::class.java)
             viewModel.setAccount(account)
-            onLoginSuccess()
+            viewModel.firebaseAuthWithGoogle(account) { success ->
+                if (success) {
+                    onLoginSuccess()
+                } else {
+                    Log.e("Login", "Firebase 인증 실패")
+                }
+            }
         } catch (e: ApiException) {
             Log.w("Login", "signInResult:failed code=${e.statusCode}")
         }
     }
 
-    val gso = viewModel.getSignInOptions()
-    val signInClient = GoogleSignIn.getClient(context, gso)
-
+    // UI 구성
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
