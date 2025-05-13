@@ -7,12 +7,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.shujinko.app.ui.screen.HomeScreen
 import com.shujinko.app.ui.screen.LoginScreen
+import com.shujinko.app.ui.screen.MainScreen
 import com.shujinko.app.ui.screen.MultiImagePickerScreen
 import com.shujinko.app.ui.screen.UsageStatsScreen
 import com.shujinko.app.viewmodel.LoginViewModel
 
 object Routes {
     const val LOGIN = "login"
+    const val MAIN = "main"
     const val HOME = "home"
     const val IMAGE_PICKER = "image_picker"
     const val USAGE_STATS = "usage_stats"
@@ -26,12 +28,13 @@ fun ShujinkoNavGraph(navController: NavHostController) {
             LoginScreen(
                 viewModel = loginViewModel,
                 onLoginSuccess = {
-                    navController.navigate(Routes.HOME) {
+                    navController.navigate(Routes.MAIN) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 }
             )
         }
+        composable(Routes.MAIN) { MainScreen(navController) }
         composable(Routes.HOME) { HomeScreen(navController) }
         composable(Routes.IMAGE_PICKER) { MultiImagePickerScreen() }
         composable(Routes.USAGE_STATS) { UsageStatsScreen() }
