@@ -2,24 +2,23 @@ package com.shujinko.app.viewmodel
 
 import android.app.Application
 import android.util.Log
-import androidx.compose.runtime.Composable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.Timestamp
-import androidx.compose.ui.platform.LocalContext
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _account = MutableLiveData<GoogleSignInAccount?>()
     val account: LiveData<GoogleSignInAccount?> = _account
+
+    private val auth = FirebaseAuth.getInstance()
+
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
     fun checkExistingSignIn() {
         val account = GoogleSignIn.getLastSignedInAccount(getApplication())
@@ -31,36 +30,23 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         _account.value = account
     }
 
-    @Composable
-    fun getSignInOptions(): GoogleSignInOptions {
-        return GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
-    }
-
-    fun firebaseAuthWithGoogle(account: GoogleSignInAccount, onResult: (Boolean) -> Unit) {
+    fun firebaseAuthWithGoogle(account: GoogleSignInAccount, onResult: (Boolean, String?) -> Unit) {
+        _isLoading.value = true
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-        FirebaseAuth.getInstance().signInWithCredential(credential)
+
+        auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
-                onResult(task.isSuccessful)
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    val idToken = account.idToken
+                    Log.d("Login", "Firebase 인증 성공, idToken: $idToken")
+                    _isLoading.value = false
+                    onResult(true, idToken) // 👈 서버로 보낼 수 있도록 idToken 전달
+                } else {
+                    Log.e("Login", "Firebase 인증 실패", task.exception)
+                    _isLoading.value = false
+                    onResult(false, null)
+                }
             }
     }
-
-    private fun saveUserToFirestore(user: FirebaseUser?, onComplete: (Boolean) -> Unit) {
-        user ?: return onComplete(false)
-        val db = FirebaseFirestore.getInstance()
-        val userInfo = mapOf(
-            "uid" to user.uid,
-            "email" to user.email,
-            "name" to user.displayName,
-            "photoUrl" to user.photoUrl?.toString(),
-            "createdAt" to Timestamp.now()
-        )
-
-        db.collection("users").document(user.uid)
-            .set(userInfo)
-            .addOnSuccessListener { onComplete(true) }
-            .addOnFailureListener { onComplete(false) }
-    }
-
 }
