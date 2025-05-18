@@ -36,14 +36,17 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
             viewModel.setAccount(account)
             viewModel.firebaseAuthWithGoogle(account) { success, idToken ->
                 if (success && idToken != null) {
-                    Log.d("Login", "🎉 idToken = $idToken")
+                    Log.d("Login", "idToken = $idToken")
 
-                    // TODO: 여기에 서버로 idToken 전송 로직 추가
-                    // 예: sendIdTokenToServer(idToken)
-
-                    onLoginSuccess()
+                    viewModel.sendTokenToServer(idToken) { result ->
+                        if (result) {
+                            onLoginSuccess()
+                        } else {
+                            Log.e("Login", "서버 로그인 실패")
+                        }
+                    }
                 } else {
-                    Log.e("Login", "🔥 Firebase 인증 실패 또는 idToken 없음")
+                    Log.e("Login", "Firebase 인증 실패 또는 idToken 없음")
                 }
             }
         } catch (e: ApiException) {

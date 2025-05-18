@@ -5,10 +5,14 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.shujinko.app.data.remote.RetrofitClient
+import com.shujinko.app.repository.AuthRepository
+import kotlinx.coroutines.launch
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -19,6 +23,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
+
+    private val authRepository = AuthRepository(RetrofitClient.authService)
 
     fun checkExistingSignIn() {
         val account = GoogleSignIn.getLastSignedInAccount(getApplication())
@@ -41,7 +47,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     val idToken = account.idToken
                     Log.d("Login", "Firebase 인증 성공, idToken: $idToken")
                     _isLoading.value = false
-                    onResult(true, idToken) // 👈 서버로 보낼 수 있도록 idToken 전달
+                    onResult(true, idToken) // 서버로 보낼 수 있도록 idToken 전달
                 } else {
                     Log.e("Login", "Firebase 인증 실패", task.exception)
                     _isLoading.value = false
@@ -49,4 +55,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
     }
+    fun sendTokenToServer(idToken: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val context = getApplication<Application>().applicationContext
+            val result = authRepository.login(context, idToken)
+            onComplete(result)
+        }
+    }   
 }
