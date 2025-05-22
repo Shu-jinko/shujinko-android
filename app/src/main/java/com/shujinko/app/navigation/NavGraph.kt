@@ -9,10 +9,12 @@ import com.shujinko.app.ui.screen.HomeScreen
 import com.shujinko.app.ui.screen.LoginScreen
 import com.shujinko.app.ui.screen.MainScreen
 import com.shujinko.app.ui.screen.MultiImagePickerScreen
+import com.shujinko.app.ui.screen.SplashScreen
 import com.shujinko.app.ui.screen.UsageStatsScreen
 import com.shujinko.app.viewmodel.LoginViewModel
 
 object Routes {
+    const val SPLASH = "splash"
     const val LOGIN = "login"
     const val MAIN = "main"
     const val HOME = "home"
@@ -22,7 +24,10 @@ object Routes {
 
 @Composable
 fun ShujinkoNavGraph(navController: NavHostController) {
-    NavHost(navController, startDestination = Routes.LOGIN) {
+    NavHost(navController, startDestination = Routes.SPLASH) {
+        composable(Routes.SPLASH) {
+            SplashScreen(navController)
+        }
         composable(Routes.LOGIN) {
             val loginViewModel: LoginViewModel = viewModel()
             LoginScreen(
