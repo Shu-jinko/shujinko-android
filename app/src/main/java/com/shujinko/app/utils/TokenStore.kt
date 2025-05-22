@@ -10,13 +10,33 @@ import kotlinx.coroutines.flow.map
 val Context.dataStore by preferencesDataStore(name = "auth")
 
 object TokenStore {
-    private val JWT_TOKEN = stringPreferencesKey("jwt_token")
+    private val ACCESS_TOKEN = stringPreferencesKey("access_token")
+    private val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
 
-    suspend fun saveToken(context: Context, token: String) {
-        context.dataStore.edit { prefs -> prefs[JWT_TOKEN] = token }
+    suspend fun saveTokens(context: Context, accessToken: String, refreshToken: String) {
+        context.dataStore.edit { prefs ->
+            prefs[ACCESS_TOKEN] = accessToken
+            prefs[REFRESH_TOKEN] = refreshToken
+        }
     }
 
-    fun getToken(context: Context): Flow<String?> {
-        return context.dataStore.data.map { it[JWT_TOKEN] }
+    suspend fun saveAccessToken(context: Context, token: String) {
+        context.dataStore.edit { prefs -> prefs[ACCESS_TOKEN] = token }
+    }
+
+    suspend fun saveRefreshToken(context: Context, token: String) {
+        context.dataStore.edit { prefs -> prefs[REFRESH_TOKEN] = token }
+    }
+
+    fun getAccessToken(context: Context): Flow<String?> {
+        return context.dataStore.data.map { it[ACCESS_TOKEN] }
+    }
+
+    fun getRefreshToken(context: Context): Flow<String?> {
+        return context.dataStore.data.map { it[REFRESH_TOKEN] }
+    }
+
+    suspend fun clearAll(context: Context) {
+        context.dataStore.edit { it.clear() }
     }
 }

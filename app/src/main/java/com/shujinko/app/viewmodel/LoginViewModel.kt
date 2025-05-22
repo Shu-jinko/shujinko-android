@@ -61,5 +61,26 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             val result = authRepository.login(context, idToken)
             onComplete(result)
         }
-    }   
+    }
+    fun tryAutoLogin(onSuccess: () -> Unit, onFail: () -> Unit) {
+        val context = getApplication<Application>().applicationContext
+        viewModelScope.launch {
+            com.shujinko.app.utils.TokenStore.getRefreshToken(context).collect { refreshToken ->
+                if (refreshToken.isNullOrBlank()) {
+                    Log.d("AutoLogin", "리프레시 토큰 없음")
+                    onFail()
+                    return@collect
+                }
+
+                val result = authRepository.refresh(context, refreshToken)
+                if (result) {
+                    Log.d("AutoLogin", "자동 로그인 성공")
+                    onSuccess()
+                } else {
+                    Log.d("AutoLogin", "자동 로그인 실패")
+                    onFail()
+                }
+            }
+        }
+    }
 }
