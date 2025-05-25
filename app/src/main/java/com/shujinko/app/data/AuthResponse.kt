@@ -1,4 +1,4 @@
-package com.shujinko.app.data.remote
+package com.shujinko.app.data
 
 data class AuthResponse(
     val accessToken: String,
