@@ -68,6 +68,7 @@ dependencies {
 
     // Jetpack Compose
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
+    implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -109,4 +110,14 @@ dependencies {
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Preferences DataStore (Key-Value 방식)
+    implementation ("androidx.datastore:datastore-preferences:1.1.6")
+
+    // OkHttpClient 로깅 인터셉터 -- 실제 요청 URL 로그로 확인
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

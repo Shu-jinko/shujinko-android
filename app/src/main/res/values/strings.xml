@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">shujinko</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="default_web_client_id">1060790258285-ci65v2eso0e2g0h78vc5bfidj0lp0goi.apps.googleusercontent.com</string>
 </resources>
