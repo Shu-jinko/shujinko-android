@@ -14,7 +14,7 @@ fun DiaryWriteScreen() {
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Algignment.Center
     ) {
         Text(
             text = "✏️ 일기 쓰기 탭입니다",

@@ -8,6 +8,7 @@ import com.shujinko.app.data.remote.DiaryService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class DiaryViewModel(private val diaryService: DiaryService) : ViewModel() {
 
@@ -19,6 +20,8 @@ class DiaryViewModel(private val diaryService: DiaryService) : ViewModel() {
             val response = diaryService.getDiaryList("Bearer $token")
             if (response.isSuccessful) {
                 _diaryList.value = response.body() ?: emptyList()
+            } else {
+                Log.e("DiaryViewModel", "Failed to load diary list: ${response.code()}")
             }
         }
     }
@@ -29,6 +32,8 @@ class DiaryViewModel(private val diaryService: DiaryService) : ViewModel() {
             if (response.isSuccessful) {
                 onSuccess()
                 loadDiaryList(token)
+            } else {
+                Log.e("DiaryViewModel", "Failed to create diary: ${response.code()}")
             }
         }
     }
@@ -39,6 +44,8 @@ class DiaryViewModel(private val diaryService: DiaryService) : ViewModel() {
             if (response.isSuccessful) {
                 onSuccess()
                 loadDiaryList(token)
+            } else {
+                Log.e("DiaryViewModel", "Failed to update diary: ${response.code()}")
             }
         }
     }
@@ -49,6 +56,8 @@ class DiaryViewModel(private val diaryService: DiaryService) : ViewModel() {
             if (response.isSuccessful) {
                 onSuccess()
                 loadDiaryList(token)
+            } else {
+                Log.e("DiaryViewModel", "Failed to delete diary: ${response.code()}")
             }
         }
     }
