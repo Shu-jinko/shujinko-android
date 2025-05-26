@@ -26,13 +26,13 @@ interface DiaryService {
     @PATCH("/diary/{id}")
     suspend fun updateDiary(
         @Header("Authorization") token: String,
-        @Path("id") id: Int,
+        @Path("id") id: Long,
         @Body diaryRequest: DiaryRequest
     ): Response<Unit>
 
     @DELETE("/diary/{id}")
     suspend fun deleteDiary(
         @Header("Authorization") token: String,
-        @Path("id") id: Int
+        @Path("id") id: Long
     ): Response<Unit>
 }
