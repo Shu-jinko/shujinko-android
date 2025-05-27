@@ -1,26 +1,19 @@
 package com.shujinko.app.ui.screen
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.composable
+import androidx.navigation.compose.*
 import com.shujinko.app.viewmodel.DiaryViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 
 @Composable
 fun MainScreen(
@@ -40,7 +33,7 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen(bottomNavController) // 여긴 navController만 받는다면 그대로 OK
+                HomeScreen(bottomNavController)
             }
             composable("write") {
                 DiaryWriteScreen(
@@ -52,10 +45,14 @@ fun MainScreen(
             composable("profile") {
                 ProfileScreen()
             }
+
+            // ✅ 추가: 탭 내에서도 이동 가능하도록 등록
+            composable("diary_result") {
+                DiaryResultScreen()
+            }
         }
     }
 }
-
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {

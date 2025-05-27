@@ -1,5 +1,6 @@
 package com.shujinko.app.ui.screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -9,7 +10,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.shujinko.app.navigation.Screen
 import com.shujinko.app.viewmodel.DiaryViewModel
 
 @Composable
@@ -22,6 +22,15 @@ fun DiaryWriteScreen(
     val isLoading by diaryViewModel.isLoading.collectAsState()
     val errorMessage by diaryViewModel.errorMessage.collectAsState()
     val context = LocalContext.current
+
+    var navigateTrigger by remember { mutableStateOf(false) }
+
+    LaunchedEffect(navigateTrigger) {
+        if (navigateTrigger) {
+            navController.navigate("diary_result")
+            navigateTrigger = false
+        }
+    }
 
     // 에러 발생 시 Toast로 표시
     LaunchedEffect(errorMessage) {
@@ -56,7 +65,7 @@ fun DiaryWriteScreen(
         Button(
             onClick = {
                 diaryViewModel.createDiary(token, text) {
-                    navController.navigate(Screen.DiaryResult.route)
+                    navigateTrigger = true
                 }
             },
             enabled = !isLoading,

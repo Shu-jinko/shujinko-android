@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
+import androidx.compose.runtime.Composable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -48,7 +49,7 @@ class DiaryViewModel @Inject constructor(
 
             if (response.isSuccessful) {
                 onSuccess()
-                loadDiaryList(token)
+                //loadDiaryList(token)
             } else {
                 _errorMessage.value = "일기 작성 실패: ${response.code()}"
                 Log.e("DiaryViewModel", "Failed to create diary: ${response.code()}")

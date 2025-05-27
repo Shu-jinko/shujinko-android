@@ -52,8 +52,5 @@ fun ShujinkoNavGraph(
             val diaryViewModel: DiaryViewModel = hiltViewModel()
             DiaryWriteScreen(navController, diaryViewModel, token)
         }
-        composable(Screen.DiaryResult.route) {
-            DiaryResultScreen()
-        }
     }
 }
