@@ -20,9 +20,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.composable
+import com.shujinko.app.viewmodel.DiaryViewModel
 
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen(
+    diaryViewModel: DiaryViewModel,
+    token: String
+) {
     val bottomNavController = rememberNavController()
 
     Scaffold(
@@ -35,12 +39,23 @@ fun MainScreen(navController: NavHostController) {
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(bottomNavController) }
-            composable("write") { DiaryWriteScreen() }
-            composable("profile") { ProfileScreen() }
+            composable("home") {
+                HomeScreen(bottomNavController) // 여긴 navController만 받는다면 그대로 OK
+            }
+            composable("write") {
+                DiaryWriteScreen(
+                    navController = bottomNavController,
+                    diaryViewModel = diaryViewModel,
+                    token = token
+                )
+            }
+            composable("profile") {
+                ProfileScreen()
+            }
         }
     }
 }
+
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {

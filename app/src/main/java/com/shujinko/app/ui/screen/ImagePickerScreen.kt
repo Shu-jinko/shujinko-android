@@ -20,7 +20,9 @@ import com.shujinko.app.viewmodel.MultiImageViewModel
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MultiImagePickerScreen(viewModel: MultiImageViewModel = viewModel()) {

@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.shujinko.app.navigation.Routes
+import com.shujinko.app.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,13 +50,13 @@ fun HomeScreen(navController: NavController) {
                 HomeActionCard(
                     label = "사진 정보",
                     icon = Icons.Default.Face,
-                    onClick = { navController.navigate(Routes.IMAGE_PICKER) },
+                    onClick = { navController.navigate(Screen.ImagePicker.route) },
                     modifier = Modifier.weight(1f)
                 )
                 HomeActionCard(
                     label = "앱 사용 기록",
                     icon = Icons.Default.ShoppingCart,
-                    onClick = { navController.navigate(Routes.USAGE_STATS) },
+                    onClick = { navController.navigate(Screen.UsageStats.route) },
                     modifier = Modifier.weight(1f)
                 )
             }
