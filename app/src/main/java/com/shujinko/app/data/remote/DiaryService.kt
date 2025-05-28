@@ -7,8 +7,20 @@ import retrofit2.http.*
 
 interface DiaryService {
 
-    @GET("diary")
-    suspend fun getDiaryList(@Header("Authorization") token: String): Response<List<DiaryResponse>>
+    @GET("/diary")
+    suspend fun getDiary(
+        @Header("Authorization") token: String,
+        @Query("year") year: Int,
+        @Query("month") month: Int,
+        @Query("day") day: Int
+    ): Response<DiaryResponse>
+
+    @GET("/diary/diaries")
+    suspend fun getDiaryList(
+        @Header("Authorization") token: String,
+        @Query("year") year: Int,
+        @Query("month") month: Int
+    ): Response<List<DiaryResponse>>
 
     @POST("diary")
     suspend fun createDiary(@Header("Authorization") token: String, @Body request: DiaryRequest): Response<Void>

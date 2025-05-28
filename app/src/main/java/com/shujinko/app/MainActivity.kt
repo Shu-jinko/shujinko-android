@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportActionBar?.hide()
         setContent {
             ShujinkoTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {

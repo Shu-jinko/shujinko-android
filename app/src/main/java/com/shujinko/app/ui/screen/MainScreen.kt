@@ -7,13 +7,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.shujinko.app.viewmodel.DiaryViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import java.time.LocalDate
 
 @Composable
 fun MainScreen(
@@ -24,7 +24,11 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(bottomNavController)
+            BottomNavigationBar(
+                navController = bottomNavController,
+                token = token,
+                diaryViewModel = diaryViewModel
+            )
         }
     ) { innerPadding ->
         NavHost(
@@ -33,46 +37,71 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen(bottomNavController)
+                HomeScreen()
             }
-            composable("write") {
+            composable("diary_write") {
                 DiaryWriteScreen(
                     navController = bottomNavController,
                     diaryViewModel = diaryViewModel,
                     token = token
                 )
             }
+            composable("diary_result/{year}/{month}/{day}") { backStackEntry ->
+                val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
+                val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
+                val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
+
+                DiaryResultScreen(
+                    year = year,
+                    month = month,
+                    day = day,
+                    token = token,
+                    diaryViewModel = diaryViewModel,
+                )
+            }
             composable("profile") {
                 ProfileScreen()
-            }
-
-            // ✅ 추가: 탭 내에서도 이동 가능하도록 등록
-            composable("diary_result") {
-                DiaryResultScreen()
             }
         }
     }
 }
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(
+    navController: NavController,
+    token: String,
+    diaryViewModel: DiaryViewModel
+) {
     val items = listOf(
         BottomNavItem("home", "홈", Icons.Default.Home),
         BottomNavItem("write", "쓰기", Icons.Default.Edit),
         BottomNavItem("profile", "내 정보", Icons.Default.Person)
     )
 
+    val currentRoute = currentRoute(navController)
+    val today = LocalDate.now()
+
     NavigationBar {
-        val currentRoute = currentRoute(navController)
         items.forEach { item ->
             NavigationBarItem(
                 icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label) },
                 selected = currentRoute == item.route,
                 onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo("home") { inclusive = false }
-                        launchSingleTop = true
+                    if (item.route == "write") {
+                        val today = LocalDate.now()
+                        diaryViewModel.getDiary(token, today.year, today.monthValue, today.dayOfMonth) { exists ->
+                            if (exists) {
+                                navController.navigate("diary_result/${today.year}/${today.monthValue}/${today.dayOfMonth}")
+                            } else {
+                                navController.navigate("diary_write")
+                            }
+                        }
+                    } else {
+                        navController.navigate(item.route) {
+                            popUpTo("home") { inclusive = false }
+                            launchSingleTop = true
+                        }
                     }
                 }
             )

@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.shujinko.app.viewmodel.DiaryViewModel
+import java.time.LocalDate
 
 @Composable
 fun DiaryWriteScreen(
@@ -24,10 +25,11 @@ fun DiaryWriteScreen(
     val context = LocalContext.current
 
     var navigateTrigger by remember { mutableStateOf(false) }
+    val today = LocalDate.now()
 
     LaunchedEffect(navigateTrigger) {
         if (navigateTrigger) {
-            navController.navigate("diary_result")
+            navController.navigate("diary_result/${today.year}/${today.monthValue}/${today.dayOfMonth}")
             navigateTrigger = false
         }
     }

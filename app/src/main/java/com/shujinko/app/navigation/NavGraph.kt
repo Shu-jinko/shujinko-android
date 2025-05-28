@@ -39,15 +39,6 @@ fun ShujinkoNavGraph(
                 token = token
             )
         }
-        composable(Screen.Home.route) {
-            HomeScreen(navController)
-        }
-        composable(Screen.ImagePicker.route) {
-            MultiImagePickerScreen()
-        }
-        composable(Screen.UsageStats.route) {
-            UsageStatsScreen()
-        }
         composable(Screen.DiaryWrite.route) {
             val diaryViewModel: DiaryViewModel = hiltViewModel()
             DiaryWriteScreen(navController, diaryViewModel, token)

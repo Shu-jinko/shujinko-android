@@ -5,8 +5,5 @@ enum class Screen(val route: String) {
     Login("login"),
     Main("main"),
     Home("home"),
-    ImagePicker("image_picker"),
-    UsageStats("usage_stats"),
     DiaryWrite("diary_write"),
-    DiaryResult("diary_result")
 }
