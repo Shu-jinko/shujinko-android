@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import java.time.LocalDate
 
 @Composable
@@ -80,7 +82,30 @@ fun MainScreen(
                 )
             }
             composable("profile") {
-                ProfileScreen()
+                ProfileScreen(
+                    navController = bottomNavController
+                )
+            }
+            composable(
+                route = "delete_diary/{year}/{month}/{day}",
+                arguments = listOf(
+                    navArgument("year") { type = NavType.IntType },
+                    navArgument("month") { type = NavType.IntType },
+                    navArgument("day") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val year = backStackEntry.arguments?.getInt("year") ?: return@composable
+                val month = backStackEntry.arguments?.getInt("month") ?: return@composable
+                val day = backStackEntry.arguments?.getInt("day") ?: return@composable
+
+                DiaryDeleteScreen(
+                    year = year,
+                    month = month,
+                    day = day,
+                    navController = bottomNavController,
+                    diaryViewModel = diaryViewModel,
+                    token = token
+                )
             }
         }
     }

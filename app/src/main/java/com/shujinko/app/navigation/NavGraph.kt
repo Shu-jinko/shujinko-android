@@ -5,8 +5,10 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.shujinko.app.ui.screen.*
 import com.shujinko.app.viewmodel.DiaryViewModel
 import com.shujinko.app.viewmodel.LoginViewModel
@@ -66,6 +68,30 @@ fun ShujinkoNavGraph(
                 initialText = java.net.URLDecoder.decode(rawDiary, "UTF-8"),
                 diaryId = id
             )
+        }
+        composable(
+            route = "delete_diary/{year}/{month}/{day}",
+            arguments = listOf(
+                navArgument("year") { type = NavType.IntType },
+                navArgument("month") { type = NavType.IntType },
+                navArgument("day") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val year = backStackEntry.arguments?.getInt("year") ?: return@composable
+            val month = backStackEntry.arguments?.getInt("month") ?: return@composable
+            val day = backStackEntry.arguments?.getInt("day") ?: return@composable
+
+            val diaryViewModel: DiaryViewModel = hiltViewModel()
+            val token = token
+
+                DiaryDeleteScreen(
+                    year = year,
+                    month = month,
+                    day = day,
+                    navController = navController,
+                    diaryViewModel = diaryViewModel,
+                    token = token
+                )
         }
     }
 }
