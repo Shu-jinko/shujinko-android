@@ -30,7 +30,13 @@ class DiaryViewModel @Inject constructor(
     private val _todayDiary = MutableStateFlow<DiaryResponse?>(null)
     val todayDiary: StateFlow<DiaryResponse?> = _todayDiary
 
-    fun getDiary(token: String, year: Int, month: Int, day: Int, onComplete: (Boolean) -> Unit = {}) {
+    fun getDiary(
+        token: String,
+        year: Int,
+        month: Int,
+        day: Int,
+        onComplete: (Boolean, DiaryResponse?) -> Unit = { _, _ -> }
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
@@ -38,20 +44,21 @@ class DiaryViewModel @Inject constructor(
             try {
                 val response = diaryService.getDiary("Bearer $token", year, month, day)
                 if (response.isSuccessful) {
-                    _todayDiary.value = response.body()
+                    val diary = response.body()
+                    _todayDiary.value = diary
                     Log.d("DiaryViewModel", "오늘 일기 불러오기 성공")
-                    onComplete(true)
+                    onComplete(true, diary)
                 } else {
                     _errorMessage.value = "오늘 일기 없음 또는 불러오기 실패: ${response.code()}"
                     _todayDiary.value = null
                     Log.w("DiaryViewModel", "getDiary 실패: ${response.code()}")
-                    onComplete(false)
+                    onComplete(false, null)
                 }
             } catch (e: Exception) {
                 Log.e("DiaryViewModel", "getDiary 예외 발생", e)
                 _errorMessage.value = "네트워크 오류 발생"
                 _todayDiary.value = null
-                onComplete(false)
+                onComplete(false, null)
             }
 
             _isLoading.value = false

@@ -43,7 +43,26 @@ fun MainScreen(
                 DiaryWriteScreen(
                     navController = bottomNavController,
                     diaryViewModel = diaryViewModel,
-                    token = token
+                    token = token,
+                    isEditMode = false,
+                    initialText = "",
+                    diaryId = null
+                )
+            }
+            composable("diary_edit/{id}/{year}/{month}/{day}/{rawDiary}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
+                val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
+                val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
+                val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
+                val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
+
+                DiaryWriteScreen(
+                    navController = bottomNavController,
+                    diaryViewModel = diaryViewModel,
+                    token = token,
+                    isEditMode = true,
+                    initialText = rawDiary,
+                    diaryId = id
                 )
             }
             composable("diary_result/{year}/{month}/{day}") { backStackEntry ->
@@ -57,6 +76,7 @@ fun MainScreen(
                     day = day,
                     token = token,
                     diaryViewModel = diaryViewModel,
+                    navController = bottomNavController
                 )
             }
             composable("profile") {
@@ -90,10 +110,12 @@ fun BottomNavigationBar(
                 onClick = {
                     if (item.route == "write") {
                         val today = LocalDate.now()
-                        diaryViewModel.getDiary(token, today.year, today.monthValue, today.dayOfMonth) { exists ->
-                            if (exists) {
+                        diaryViewModel.getDiary(token, today.year, today.monthValue, today.dayOfMonth) { exists, diary ->
+                            if (exists && diary != null) {
+                                // 일기 있으면 결과 화면으로 이동
                                 navController.navigate("diary_result/${today.year}/${today.monthValue}/${today.dayOfMonth}")
                             } else {
+                                // 없으면 작성 화면으로 이동
                                 navController.navigate("diary_write")
                             }
                         }

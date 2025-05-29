@@ -20,7 +20,11 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
+import androidx.navigation.NavController
 import com.shujinko.app.data.Emotion
+import com.shujinko.app.navigation.Screen
+import java.net.URLEncoder
+import java.time.LocalDate
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -33,7 +37,8 @@ fun DiaryResultScreen(
     month: Int,
     day: Int,
     token: String,
-    diaryViewModel: DiaryViewModel
+    diaryViewModel: DiaryViewModel,
+    navController: NavController
 ) {
     val diary by diaryViewModel.todayDiary.collectAsState()
     val error by diaryViewModel.errorMessage.collectAsState()
@@ -85,13 +90,25 @@ fun DiaryResultScreen(
             )
 
             Text("📌 주요 키워드:", fontSize = 16.sp)
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+
+            val groupedKeywords = it.keywords.groupBy { keyword -> keyword.label }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                it.keywords.forEach { keyword ->
-                    AssistChip(onClick = {}, label = { Text(keyword) })
+                groupedKeywords.forEach { (label, keywords) ->
+                    Column {
+                        Text(text = label, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            keywords.forEach { keyword ->
+                                AssistChip(onClick = {}, label = { Text(keyword.text) })
+                            }
+                        }
+                    }
                 }
             }
 
@@ -101,7 +118,11 @@ fun DiaryResultScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { /* TODO */ },
+                onClick = {
+                    val encodedRaw = URLEncoder.encode(diary!!.rawDiary, "UTF-8").replace("+", "%20")
+                    val today = LocalDate.now()
+                    navController.navigate("diary_edit/${diary!!.diaryId}/${today.year}/${today.monthValue}/${today.dayOfMonth}/$encodedRaw")
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("수정하기")

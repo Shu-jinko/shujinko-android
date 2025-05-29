@@ -23,10 +23,17 @@ interface DiaryService {
     ): Response<List<DiaryResponse>>
 
     @POST("diary")
-    suspend fun createDiary(@Header("Authorization") token: String, @Body request: DiaryRequest): Response<Void>
+    suspend fun createDiary(
+        @Header("Authorization") token: String,
+        @Body request: DiaryRequest
+    ): Response<Void>
 
-    @PUT("diary/{id}")
-    suspend fun updateDiary(@Header("Authorization") token: String, @Path("id") id: Long, @Body request: DiaryRequest): Response<Void>
+    @PATCH("diary/{id}")
+    suspend fun updateDiary(
+        @Header("Authorization") token: String,
+        @Path("id") id: Long,
+        @Body request: DiaryRequest
+    ): Response<Void>
 
     @DELETE("diary/{id}")
     suspend fun deleteDiary(@Header("Authorization") token: String, @Path("id") id: Long): Response<Void>

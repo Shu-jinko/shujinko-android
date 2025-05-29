@@ -1,6 +1,5 @@
 package com.shujinko.app.ui.screen
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -17,9 +16,18 @@ import java.time.LocalDate
 fun DiaryWriteScreen(
     navController: NavController,
     diaryViewModel: DiaryViewModel,
-    token: String
+    token: String,
+    isEditMode: Boolean = false,
+    diaryId: Long? = null,
+    initialText: String = ""
 ) {
-    var text by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf(initialText) }
+
+    LaunchedEffect(Unit) {
+        println("🧾 editMode: $isEditMode") // true 나와야 함
+        println("🧾 initialText: $initialText") // 원본 일기 나와야 함
+    }
+
     val isLoading by diaryViewModel.isLoading.collectAsState()
     val errorMessage by diaryViewModel.errorMessage.collectAsState()
     val context = LocalContext.current
@@ -49,7 +57,7 @@ fun DiaryWriteScreen(
     ) {
         Column {
             Text(
-                text = "✏️ 일기를 입력하세요",
+                text = if (isEditMode) "✏️ 일기를 수정하세요" else "✏️ 일기를 입력하세요",
                 fontSize = 20.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -66,8 +74,14 @@ fun DiaryWriteScreen(
 
         Button(
             onClick = {
-                diaryViewModel.createDiary(token, text) {
-                    navigateTrigger = true
+                if (isEditMode && diaryId != null) {
+                    diaryViewModel.updateDiary(token, diaryId, text){
+                        navController.popBackStack() // 수정 후 뒤로 이동
+                    }
+                } else {
+                    diaryViewModel.createDiary(token, text) {
+                        navigateTrigger = true
+                    }
                 }
             },
             enabled = !isLoading,
@@ -79,7 +93,7 @@ fun DiaryWriteScreen(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("작성 완료")
+                Text(if (isEditMode) "수정 완료" else "작성 완료")
             }
         }
     }

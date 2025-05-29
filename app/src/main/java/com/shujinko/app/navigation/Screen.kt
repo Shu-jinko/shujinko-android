@@ -6,4 +6,5 @@ enum class Screen(val route: String) {
     Main("main"),
     Home("home"),
     DiaryWrite("diary_write"),
+    DiaryEdit("diary_edit/{id}/{year}/{month}/{day}/{rawDiary}"),
 }

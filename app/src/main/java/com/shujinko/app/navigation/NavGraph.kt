@@ -41,7 +41,31 @@ fun ShujinkoNavGraph(
         }
         composable(Screen.DiaryWrite.route) {
             val diaryViewModel: DiaryViewModel = hiltViewModel()
-            DiaryWriteScreen(navController, diaryViewModel, token)
+            DiaryWriteScreen(
+                navController = navController,
+                diaryViewModel = diaryViewModel,
+                token = token,
+                isEditMode = false,
+                initialText = "",
+                diaryId = null
+            )
+        }
+        composable("diary_edit/{id}/{year}/{month}/{day}/{rawDiary}") { backStackEntry ->
+            val diaryViewModel: DiaryViewModel = hiltViewModel()
+            val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
+            val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
+            val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
+            val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
+            val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
+
+            DiaryWriteScreen(
+                navController = navController,
+                diaryViewModel = diaryViewModel,
+                token = token,
+                isEditMode = true,
+                initialText = java.net.URLDecoder.decode(rawDiary, "UTF-8"),
+                diaryId = id
+            )
         }
     }
 }

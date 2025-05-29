@@ -11,8 +11,13 @@ data class DiaryResponse(
     val createdAt: String,
     val summary: String,
     val label: String,
-    val keywords: List<String>,
+    val keywords: List<Keyword>,
     val emotions: List<Emotion>
+)
+
+data class Keyword(
+    val text: String,
+    val label: String
 )
 
 data class Emotion(
