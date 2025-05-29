@@ -15,4 +15,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "shujinko"
 include(":app")
- 

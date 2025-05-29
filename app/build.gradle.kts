@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -30,19 +32,24 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.3"
     }
+
     packaging {
         resources {
             excludes += setOf(
@@ -82,21 +89,13 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore-ktx")
 
-    // Google Sign-In
+    // Google Sign-In (필요하면 유지)
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-
-    // Image loading
-    implementation("io.coil-kt:coil-compose:2.4.0")
 
     // Navigation & Activity
     implementation("androidx.navigation:navigation-compose:2.7.3")
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.activity:activity-ktx:1.7.2")
-    implementation("androidx.compose.material3:material3-android:1.3.2")
-    implementation("androidx.wear.compose:compose-navigation:1.4.1")
 
     // Unit Testing
     testImplementation("junit:junit:4.13.2")
@@ -111,13 +110,21 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    // Retrofit
+    // Retrofit + GSON
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
-    // Preferences DataStore (Key-Value 방식)
-    implementation ("androidx.datastore:datastore-preferences:1.1.6")
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.6")
 
-    // OkHttpClient 로깅 인터셉터 -- 실제 요청 URL 로그로 확인
+    // OkHttp logging
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-compiler:2.50")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    // FlowRow
+    implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
 }

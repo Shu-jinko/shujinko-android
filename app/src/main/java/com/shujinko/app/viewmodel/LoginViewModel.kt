@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.shujinko.app.data.remote.RetrofitClient
 import com.shujinko.app.repository.AuthRepository
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
@@ -65,11 +66,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun tryAutoLogin(onSuccess: () -> Unit, onFail: () -> Unit) {
         val context = getApplication<Application>().applicationContext
         viewModelScope.launch {
-            com.shujinko.app.utils.TokenStore.getRefreshToken(context).collect { refreshToken ->
+            try {
+                val refreshToken = com.shujinko.app.utils.TokenStore
+                    .getRefreshToken(context)
+                    .firstOrNull()
+
                 if (refreshToken.isNullOrBlank()) {
                     Log.d("AutoLogin", "리프레시 토큰 없음")
                     onFail()
-                    return@collect
+                    return@launch
                 }
 
                 val result = authRepository.refresh(context, refreshToken)
@@ -80,6 +85,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     Log.d("AutoLogin", "자동 로그인 실패")
                     onFail()
                 }
+            } catch (e: Exception) {
+                Log.e("AutoLogin", "자동 로그인 중 예외 발생", e)
+                onFail()
             }
         }
     }
