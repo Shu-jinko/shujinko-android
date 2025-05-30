@@ -57,7 +57,7 @@ fun DiaryWriteScreen(
     ) {
         Column {
             Text(
-                text = if (isEditMode) "✏️ 일기를 수정하세요" else "✏️ 일기를 입력하세요",
+                text = if (isEditMode) "일기를 수정하세요" else "일기를 입력하세요",
                 fontSize = 20.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
