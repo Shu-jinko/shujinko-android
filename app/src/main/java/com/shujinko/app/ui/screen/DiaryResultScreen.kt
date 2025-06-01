@@ -49,6 +49,22 @@ fun DiaryResultScreen(
         diaryViewModel.getDiary(token, year, month, day)
     }
 
+    var navigateEdit by remember { mutableStateOf(false) }
+
+    diary?.let { currentDiary ->
+        if (navigateEdit) {
+            LaunchedEffect(Unit) {
+                val encodedRaw = URLEncoder.encode(currentDiary.rawDiary, "UTF-8")
+                    .replace("+", "%20")
+                    .replace("\n", "%0A")
+                navController.navigate(
+                    "diary_edit/${currentDiary.diaryId}/${year}/${month}/${day}/$encodedRaw"
+                )
+                navigateEdit = false
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,76 +72,75 @@ fun DiaryResultScreen(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (diary == null && error == null) {
-            CircularProgressIndicator()
-            return@Column
-        }
-
-        error?.let {
-            Text("⚠️ 오류: $it")
-            return@Column
-        }
-
-        diary?.let {
-            Text("✅ 일기 분석 결과", fontSize = 20.sp)
-            Text("라벨: ${it.label}", style = MaterialTheme.typography.bodyLarge)
-
-            Button(onClick = { showRaw = !showRaw }) {
-                Text(if (showRaw) "원본 숨기기" else "원본 보기")
+        when {
+            diary == null && error == null -> {
+                CircularProgressIndicator()
             }
 
-            if (showRaw) {
+            error != null -> {
+                Text("⚠️ 오류: $error")
+            }
+
+            diary != null -> {
+                val it = diary!!  // Smart cast 보장
+
+                Text("✅ 일기 분석 결과", fontSize = 20.sp)
+                Text("라벨: ${it.label}", style = MaterialTheme.typography.bodyLarge)
+
+                Button(onClick = { showRaw = !showRaw }) {
+                    Text(if (showRaw) "원본 숨기기" else "원본 보기")
+                }
+
+                if (showRaw) {
+                    Text(
+                        text = it.rawDiary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+
+                Text("✍️ 재작성된 일기:", fontSize = 16.sp)
                 Text(
-                    text = it.rawDiary,
+                    text = it.rephrasedDiary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(8.dp)
                 )
-            }
 
-            Text("✍️ 재작성된 일기:", fontSize = 16.sp)
-            Text(
-                text = it.rephrasedDiary,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(8.dp)
-            )
+                Text("📌 주요 키워드:", fontSize = 16.sp)
+                val groupedKeywords = it.keywords.groupBy { keyword -> keyword.label }
 
-            Text("📌 주요 키워드:", fontSize = 16.sp)
-
-            val groupedKeywords = it.keywords.groupBy { keyword -> keyword.label }
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                groupedKeywords.forEach { (label, keywords) ->
-                    Column {
-                        Text(text = label, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            keywords.forEach { keyword ->
-                                AssistChip(onClick = {}, label = { Text(keyword.text) })
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    groupedKeywords.forEach { (label, keywords) ->
+                        Column {
+                            Text(text = label, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                keywords.forEach { keyword ->
+                                    AssistChip(onClick = {}, label = { Text(keyword.text) })
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Text("🧠 감정 분석 (비율):", fontSize = 16.sp)
-            EmotionPieChart(emotions = it.emotions)
+                Text("🧠 감정 분석 (비율):", fontSize = 16.sp)
+                EmotionPieChart(emotions = it.emotions)
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = {
-                    val encodedRaw = URLEncoder.encode(diary!!.rawDiary, "UTF-8").replace("+", "%20")
-                    val today = LocalDate.now()
-                    navController.navigate("diary_edit/${diary!!.diaryId}/${today.year}/${today.monthValue}/${today.dayOfMonth}/$encodedRaw")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("수정하기")
+                Button(
+                    onClick = {
+                        navigateEdit = true
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("수정하기")
+                }
             }
         }
     }

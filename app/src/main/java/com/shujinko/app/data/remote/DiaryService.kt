@@ -2,6 +2,7 @@ package com.shujinko.app.data.remote
 
 import com.shujinko.app.data.DiaryRequest
 import com.shujinko.app.data.DiaryResponse
+import com.shujinko.app.data.DiaryUpdate
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -32,7 +33,7 @@ interface DiaryService {
     suspend fun updateDiary(
         @Header("Authorization") token: String,
         @Path("id") id: Long,
-        @Body request: DiaryRequest
+        @Body request: DiaryUpdate
     ): Response<Void>
 
     @DELETE("diary/{id}")

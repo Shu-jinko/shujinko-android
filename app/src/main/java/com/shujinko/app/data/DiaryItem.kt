@@ -1,6 +1,10 @@
 package com.shujinko.app.data
 
 data class DiaryRequest(
+    val rawDiary: String,
+    val diaryDate: String
+)
+data class DiaryUpdate(
     val rawDiary: String
 )
 

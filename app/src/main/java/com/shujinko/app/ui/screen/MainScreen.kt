@@ -7,14 +7,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
-import androidx.navigation.compose.*
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.shujinko.app.viewmodel.DiaryViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import com.shujinko.app.navigation.DiaryNavHost
 import java.time.LocalDate
 
 @Composable
@@ -41,44 +45,12 @@ fun MainScreen(
             composable("home") {
                 HomeScreen()
             }
-            composable("diary_write") {
-                DiaryWriteScreen(
-                    navController = bottomNavController,
+            composable("diary_entry") {
+                DiaryNavHost(
                     diaryViewModel = diaryViewModel,
                     token = token,
-                    isEditMode = false,
-                    initialText = "",
-                    diaryId = null
-                )
-            }
-            composable("diary_edit/{id}/{year}/{month}/{day}/{rawDiary}") { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
-                val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
-                val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
-                val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
-                val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
-
-                DiaryWriteScreen(
-                    navController = bottomNavController,
-                    diaryViewModel = diaryViewModel,
-                    token = token,
-                    isEditMode = true,
-                    initialText = rawDiary,
-                    diaryId = id
-                )
-            }
-            composable("diary_result/{year}/{month}/{day}") { backStackEntry ->
-                val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
-                val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
-                val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
-
-                DiaryResultScreen(
-                    year = year,
-                    month = month,
-                    day = day,
-                    token = token,
-                    diaryViewModel = diaryViewModel,
-                    navController = bottomNavController
+                    parentNavController = bottomNavController,
+                    shouldNavigateAutomatically = false
                 )
             }
             composable("profile") {
@@ -124,7 +96,6 @@ fun BottomNavigationBar(
     )
 
     val currentRoute = currentRoute(navController)
-    val today = LocalDate.now()
 
     NavigationBar {
         items.forEach { item ->
@@ -134,15 +105,9 @@ fun BottomNavigationBar(
                 selected = currentRoute == item.route,
                 onClick = {
                     if (item.route == "write") {
-                        val today = LocalDate.now()
-                        diaryViewModel.getDiary(token, today.year, today.monthValue, today.dayOfMonth) { exists, diary ->
-                            if (exists && diary != null) {
-                                // 일기 있으면 결과 화면으로 이동
-                                navController.navigate("diary_result/${today.year}/${today.monthValue}/${today.dayOfMonth}")
-                            } else {
-                                // 없으면 작성 화면으로 이동
-                                navController.navigate("diary_write")
-                            }
+                        navController.navigate("diary_entry") {
+                            popUpTo("home") { inclusive = false }
+                            launchSingleTop = true
                         }
                     } else {
                         navController.navigate(item.route) {

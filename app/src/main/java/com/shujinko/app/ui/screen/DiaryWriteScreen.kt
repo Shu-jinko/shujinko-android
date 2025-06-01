@@ -10,11 +10,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.shujinko.app.viewmodel.DiaryViewModel
+import kotlinx.coroutines.isActive
 import java.time.LocalDate
 
 @Composable
 fun DiaryWriteScreen(
     navController: NavController,
+    parentNavController: NavController,
     diaryViewModel: DiaryViewModel,
     token: String,
     isEditMode: Boolean = false,
@@ -22,27 +24,39 @@ fun DiaryWriteScreen(
     initialText: String = ""
 ) {
     var text by remember { mutableStateOf(initialText) }
-
-    LaunchedEffect(Unit) {
-        println("🧾 editMode: $isEditMode") // true 나와야 함
-        println("🧾 initialText: $initialText") // 원본 일기 나와야 함
-    }
+    var hasNavigated by remember { mutableStateOf(false) }
 
     val isLoading by diaryViewModel.isLoading.collectAsState()
     val errorMessage by diaryViewModel.errorMessage.collectAsState()
+    val navigateState by diaryViewModel.shouldNavigate.collectAsState()
+    val writeCompleted by diaryViewModel.writeCompleted.collectAsState()
     val context = LocalContext.current
 
-    var navigateTrigger by remember { mutableStateOf(false) }
-    val today = LocalDate.now()
-
-    LaunchedEffect(navigateTrigger) {
-        if (navigateTrigger) {
-            navController.navigate("diary_result/${today.year}/${today.monthValue}/${today.dayOfMonth}")
-            navigateTrigger = false
+    // ✅ 일기 없을 때 → diary_entry로 이동
+    LaunchedEffect(navigateState) {
+        if (navigateState && !hasNavigated && coroutineContext.isActive) {
+            hasNavigated = true
+            parentNavController.navigate("diary_entry") {
+                launchSingleTop = true
+            }
+            diaryViewModel.resetShouldNavigate()
         }
     }
 
-    // 에러 발생 시 Toast로 표시
+    // ✅ 작성 완료 → diary_result로 이동
+    LaunchedEffect(Unit) {
+        snapshotFlow { writeCompleted }
+            .collect { completed ->
+                if (completed) {
+                    navController.navigate("diary_result") {
+                        launchSingleTop = true
+                    }
+                    diaryViewModel.resetWriteCompleted()
+                }
+            }
+    }
+
+    // 에러 메시지 Toast
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -74,14 +88,25 @@ fun DiaryWriteScreen(
 
         Button(
             onClick = {
+                val todayStr = LocalDate.now().toString()
                 if (isEditMode && diaryId != null) {
-                    diaryViewModel.updateDiary(token, diaryId, text){
-                        navController.popBackStack() // 수정 후 뒤로 이동
+                    diaryViewModel.updateDiary(token, diaryId, text) {
+                        println("✅ 수정 완료됨 - popBackStack 호출")
+                        navController.popBackStack()
                     }
                 } else {
-                    diaryViewModel.createDiary(token, text) {
-                        navigateTrigger = true
-                    }
+                    println("✍️ createDiary 호출됨 - $todayStr")
+                    diaryViewModel.createDiary(
+                        token = token,
+                        rawDiary = text,
+                        diaryDate = todayStr,
+                        onSuccess = {
+                            println("✅ 작성 완료됨 - 상태 플래그 업데이트만")
+                        },
+                        onFailure = { error ->
+                            println("❌ 작성 실패: $error")
+                        }
+                    )
                 }
             },
             enabled = !isLoading,
