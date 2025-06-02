@@ -1,6 +1,8 @@
 package com.shujinko.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -11,6 +13,9 @@ import com.shujinko.app.ui.screen.DiaryCalendarScreen
 import com.shujinko.app.ui.screen.DiaryResultScreen
 import com.shujinko.app.ui.screen.HomeScreen
 import com.shujinko.app.viewmodel.DiaryViewModel
+import java.time.LocalDate
+import androidx.compose.runtime.LaunchedEffect
+
 
 @Composable
 fun HomeNavHost(
@@ -34,10 +39,25 @@ fun HomeNavHost(
             //DiaryStatsScreen()
         }
         composable("diary_calendar") {
-            DiaryCalendarScreen { selectedDate ->
-                homeNavController.navigate("diary_result/${selectedDate.year}/${selectedDate.monthValue}/${selectedDate.dayOfMonth}")
+            val diaryViewModel: DiaryViewModel = hiltViewModel()
+            val diaryMap = diaryViewModel.diaryMap.collectAsState().value
+
+            LaunchedEffect(Unit) {
+                val now = LocalDate.now()
+                diaryViewModel.loadDiaryList(token, now.year, now.monthValue)
             }
+
+            DiaryCalendarScreen(
+                onClickMore = { selectedDate ->
+                    homeNavController.navigate("diary_result/${selectedDate.year}/${selectedDate.monthValue}/${selectedDate.dayOfMonth}")
+                },
+                diaryMap = diaryMap,
+                onMonthChange = { year, month ->
+                    diaryViewModel.loadDiaryList(token, year, month)
+                }
+            )
         }
+
         composable(
             route = "diary_result/{year}/{month}/{day}",
             arguments = listOf(

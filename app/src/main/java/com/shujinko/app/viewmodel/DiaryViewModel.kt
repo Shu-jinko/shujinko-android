@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import com.shujinko.app.data.DiaryUpdate
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,6 +21,9 @@ class DiaryViewModel @Inject constructor(
 
     private val _diaryList = MutableStateFlow<List<DiaryResponse>>(emptyList())
     val diaryList: StateFlow<List<DiaryResponse>> = _diaryList
+
+    private val _diaryMap = MutableStateFlow<Map<LocalDate, DiaryResponse>>(emptyMap())
+    val diaryMap: StateFlow<Map<LocalDate, DiaryResponse>> = _diaryMap
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -78,17 +82,23 @@ class DiaryViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     val diary = response.body()
                     _todayDiary.value = diary
-                    Log.d("DiaryViewModel", "오늘 일기 불러오기 성공")
+                    Log.d("DiaryViewModel", "오름 일기 불러오기 성공")
+                    diary?.let {
+                        val date = LocalDate.of(year, month, day)
+                        _diaryMap.value = _diaryMap.value.toMutableMap().apply {
+                            put(date, it)
+                        }
+                    }
                     onComplete(true, diary)
                 } else {
                     _todayDiary.value = null
-                    val msg = "오늘 일기 불러오기 실패: ${response.code()}"
+                    val msg = "오름 일기 불러오기 실패: ${response.code()}"
                     _errorMessage.value = msg
                     Log.e("DiaryViewModel", msg)
                     onComplete(false, null)
                 }
             } catch (e: Exception) {
-                Log.e("DiaryViewModel", "getDiary 예외 발생", e)
+                Log.e("DiaryViewModel", "getDiary 예제 발생", e)
                 _errorMessage.value = "네트워크 오류 발생"
                 _todayDiary.value = null
                 onComplete(false, null)
@@ -106,7 +116,11 @@ class DiaryViewModel @Inject constructor(
             try {
                 val response = diaryService.getDiaryList("Bearer $token", year, month)
                 if (response.isSuccessful) {
-                    _diaryList.value = response.body() ?: emptyList()
+                    val diaries = response.body() ?: emptyList()
+                    _diaryList.value = diaries
+                    _diaryMap.value = diaries.associateBy {
+                        LocalDate.parse(it.createdAt.substringBefore("T"))
+                    }
                     Log.d("DiaryViewModel", "일기 목록 불러오기 성공")
                 } else {
                     _errorMessage.value = "일기 목록 불러오기 실패: ${response.code()}"
@@ -114,7 +128,7 @@ class DiaryViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "네트워크 오류 발생"
-                Log.e("DiaryViewModel", "loadDiaryList 예외", e)
+                Log.e("DiaryViewModel", "loadDiaryList 예제", e)
             }
 
             _isLoading.value = false
@@ -189,7 +203,7 @@ class DiaryViewModel @Inject constructor(
                     Log.e("DiaryViewModel", "일기 삭제 실패: ${response.code()}")
                 }
             } catch (e: Exception) {
-                Log.e("DiaryViewModel", "일기 삭제 예외", e)
+                Log.e("DiaryViewModel", "일기 삭제 예제", e)
             }
         }
     }

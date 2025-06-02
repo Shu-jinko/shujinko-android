@@ -16,10 +16,13 @@ import java.time.YearMonth
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.core.WeekDay
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
+import com.shujinko.app.data.DiaryResponse
 
 @Composable
 fun DiaryCalendarScreen(
-    onClickMore: (LocalDate) -> Unit
+    onClickMore: (LocalDate) -> Unit,
+    diaryMap: Map<LocalDate, DiaryResponse>,
+    onMonthChange: (Int, Int) -> Unit
 ) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
 
@@ -32,8 +35,26 @@ fun DiaryCalendarScreen(
         firstDayOfWeek = DayOfWeek.SUNDAY
     )
 
+    val visibleWeek = calendarState.firstVisibleWeek
+    val visibleMonth = visibleWeek.days.firstOrNull()?.date?.monthValue
+    val visibleYear = visibleWeek.days.firstOrNull()?.date?.year
+
+    var lastMonthLoaded by remember { mutableStateOf(Pair(0, 0)) }
+
+    // 새 달로 바뀌면 loadDiaryList 호출
+    LaunchedEffect(visibleMonth, visibleYear) {
+        if (
+            visibleMonth != null && visibleYear != null &&
+            lastMonthLoaded != Pair(visibleYear, visibleMonth)
+        ) {
+            onMonthChange(visibleYear, visibleMonth)
+            lastMonthLoaded = Pair(visibleYear, visibleMonth)
+        }
+    }
+
+    // 기존 UI는 그대로
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("날짜 선택: ${selectedDate}", style = MaterialTheme.typography.titleMedium)
+        Text("날짜 선택: $selectedDate", style = MaterialTheme.typography.titleMedium)
 
         WeekCalendar(
             state = calendarState,
@@ -46,11 +67,21 @@ fun DiaryCalendarScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val diary = diaryMap[selectedDate]
+
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("📅 ${selectedDate}의 요약", style = MaterialTheme.typography.titleMedium)
-                Text("오늘도 수고했어요! 🍀")
+
+                if (diary != null) {
+                    Text("Summary: ${diary.summary}")
+                    Text("Label: ${diary.label}")
+                } else {
+                    Text("일기 데이터가 없습니다.")
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Button(onClick = { onClickMore(selectedDate) }) {
                     Text("더보기")
                 }
