@@ -1,0 +1,63 @@
+package com.shujinko.app.navigation
+
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.shujinko.app.ui.screen.DiaryCalendarScreen
+import com.shujinko.app.ui.screen.DiaryResultScreen
+import com.shujinko.app.ui.screen.HomeScreen
+import com.shujinko.app.viewmodel.DiaryViewModel
+
+@Composable
+fun HomeNavHost(
+    token: String,
+    diaryViewModel: DiaryViewModel,
+    parentNavController: NavController
+) {
+    val homeNavController = rememberNavController()
+
+    NavHost(
+        navController = homeNavController,
+        startDestination = "home"
+    ) {
+        composable("home") {
+            HomeScreen(
+                onClickStats = { homeNavController.navigate("diary_stats") },
+                onClickCalendar = { homeNavController.navigate("diary_calendar") }
+            )
+        }
+        composable("diary_stats") {
+            //DiaryStatsScreen()
+        }
+        composable("diary_calendar") {
+            DiaryCalendarScreen { selectedDate ->
+                homeNavController.navigate("diary_result/${selectedDate.year}/${selectedDate.monthValue}/${selectedDate.dayOfMonth}")
+            }
+        }
+        composable(
+            route = "diary_result/{year}/{month}/{day}",
+            arguments = listOf(
+                navArgument("year") { type = NavType.IntType },
+                navArgument("month") { type = NavType.IntType },
+                navArgument("day") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val year = backStackEntry.arguments?.getInt("year") ?: return@composable
+            val month = backStackEntry.arguments?.getInt("month") ?: return@composable
+            val day = backStackEntry.arguments?.getInt("day") ?: return@composable
+
+            DiaryResultScreen(
+                year = year,
+                month = month,
+                day = day,
+                token = token,
+                diaryViewModel = diaryViewModel,
+                navController = homeNavController
+            )
+        }
+    }
+}

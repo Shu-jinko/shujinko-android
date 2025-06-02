@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import com.shujinko.app.navigation.DiaryNavHost
+import com.shujinko.app.navigation.HomeNavHost
 import java.time.LocalDate
 
 @Composable
@@ -43,7 +44,11 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen()
+                HomeNavHost(
+                    token = token,
+                    diaryViewModel = diaryViewModel,
+                    parentNavController = bottomNavController
+                )
             }
             composable("diary_entry") {
                 DiaryNavHost(
