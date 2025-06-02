@@ -90,6 +90,7 @@ fun DiaryWriteScreen(
             onClick = {
                 val todayStr = LocalDate.now().toString()
                 if (isEditMode && diaryId != null) {
+                    println("✅ 수정 진행 중")
                     diaryViewModel.updateDiary(token, diaryId, text) {
                         println("✅ 수정 완료됨 - popBackStack 호출")
                         navController.popBackStack()

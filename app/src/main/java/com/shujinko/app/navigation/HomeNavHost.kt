@@ -15,6 +15,8 @@ import com.shujinko.app.ui.screen.HomeScreen
 import com.shujinko.app.viewmodel.DiaryViewModel
 import java.time.LocalDate
 import androidx.compose.runtime.LaunchedEffect
+import com.shujinko.app.ui.screen.DiaryWriteScreen
+import java.net.URLDecoder
 
 
 @Composable
@@ -55,6 +57,30 @@ fun HomeNavHost(
                 onMonthChange = { year, month ->
                     diaryViewModel.loadDiaryList(token, year, month)
                 }
+            )
+        }
+
+        composable(
+            "diary_edit/{id}/{year}/{month}/{day}/{rawDiary}",
+            arguments = listOf(
+                navArgument("id") { type = NavType.StringType },
+                navArgument("year") { type = NavType.StringType },
+                navArgument("month") { type = NavType.StringType },
+                navArgument("day") { type = NavType.StringType },
+                navArgument("rawDiary") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
+            val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
+
+            DiaryWriteScreen(
+                navController = homeNavController,
+                diaryViewModel = diaryViewModel,
+                token = token,
+                isEditMode = true,
+                initialText = URLDecoder.decode(rawDiary, "UTF-8"),
+                diaryId = id,
+                parentNavController = parentNavController
             )
         }
 

@@ -43,6 +43,7 @@ fun DiaryResultScreen(
     val diary by diaryViewModel.todayDiary.collectAsState()
     val error by diaryViewModel.errorMessage.collectAsState()
     var showRaw by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
@@ -63,6 +64,29 @@ fun DiaryResultScreen(
                 navigateEdit = false
             }
         }
+    }
+
+    if (showDeleteDialog && diary != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("일기 삭제") },
+            text = { Text("${year}년 ${month}월 ${day}일 일기를 정말 삭제하시겠습니까?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    diaryViewModel.deleteDiary(token, diary!!.diaryId) {
+                        showDeleteDialog = false
+                        navController.popBackStack()
+                    }
+                }) {
+                    Text("삭제", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("취소")
+                }
+            }
+        )
     }
 
     Column(
@@ -133,13 +157,28 @@ fun DiaryResultScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
-                    onClick = {
-                        navigateEdit = true
-                    },
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("수정하기")
+                    Button(
+                        onClick = {
+                            navigateEdit = true
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("수정하기")
+                    }
+
+                    Button(
+                        onClick = {
+                            showDeleteDialog = true
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    ) {
+                        Text("삭제하기", color = Color.White)
+                    }
                 }
             }
         }
