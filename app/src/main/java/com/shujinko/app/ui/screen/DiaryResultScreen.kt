@@ -10,22 +10,14 @@ import com.shujinko.app.viewmodel.DiaryViewModel
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
 import androidx.navigation.NavController
-import com.shujinko.app.data.Emotion
-import com.shujinko.app.navigation.Screen
+import com.shujinko.app.data.Item.Emotion
 import java.net.URLEncoder
-import java.time.LocalDate
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -43,10 +35,50 @@ fun DiaryResultScreen(
     val diary by diaryViewModel.todayDiary.collectAsState()
     val error by diaryViewModel.errorMessage.collectAsState()
     var showRaw by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         diaryViewModel.getDiary(token, year, month, day)
+    }
+
+    var navigateEdit by remember { mutableStateOf(false) }
+
+    diary?.let { currentDiary ->
+        if (navigateEdit) {
+            LaunchedEffect(Unit) {
+                val encodedRaw = URLEncoder.encode(currentDiary.rawDiary, "UTF-8")
+                    .replace("+", "%20")
+                    .replace("\n", "%0A")
+                navController.navigate(
+                    "diary_edit/${currentDiary.diaryId}/${year}/${month}/${day}/$encodedRaw"
+                )
+                navigateEdit = false
+            }
+        }
+    }
+
+    if (showDeleteDialog && diary != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("일기 삭제") },
+            text = { Text("${year}년 ${month}월 ${day}일 일기를 정말 삭제하시겠습니까?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    diaryViewModel.deleteDiary(token, diary!!.diaryId) {
+                        showDeleteDialog = false
+                        navController.popBackStack()
+                    }
+                }) {
+                    Text("삭제", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("취소")
+                }
+            }
+        )
     }
 
     Column(
@@ -56,76 +88,90 @@ fun DiaryResultScreen(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (diary == null && error == null) {
-            CircularProgressIndicator()
-            return@Column
-        }
-
-        error?.let {
-            Text("⚠️ 오류: $it")
-            return@Column
-        }
-
-        diary?.let {
-            Text("✅ 일기 분석 결과", fontSize = 20.sp)
-            Text("라벨: ${it.label}", style = MaterialTheme.typography.bodyLarge)
-
-            Button(onClick = { showRaw = !showRaw }) {
-                Text(if (showRaw) "원본 숨기기" else "원본 보기")
+        when {
+            diary == null && error == null -> {
+                CircularProgressIndicator()
             }
 
-            if (showRaw) {
+            error != null -> {
+                Text("⚠️ 오류: $error")
+            }
+
+            diary != null -> {
+                val it = diary!!  // Smart cast 보장
+
+                Text("✅ 일기 분석 결과", fontSize = 20.sp)
+                Text("라벨: ${it.label}", style = MaterialTheme.typography.bodyLarge)
+
+                Button(onClick = { showRaw = !showRaw }) {
+                    Text(if (showRaw) "원본 숨기기" else "원본 보기")
+                }
+
+                if (showRaw) {
+                    Text(
+                        text = it.rawDiary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+
+                Text("✍️ 재작성된 일기:", fontSize = 16.sp)
                 Text(
-                    text = it.rawDiary,
+                    text = it.rephrasedDiary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(8.dp)
                 )
-            }
 
-            Text("✍️ 재작성된 일기:", fontSize = 16.sp)
-            Text(
-                text = it.rephrasedDiary,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(8.dp)
-            )
+                Text("📌 주요 키워드:", fontSize = 16.sp)
+                val groupedKeywords = it.keywords.groupBy { keyword -> keyword.label }
 
-            Text("📌 주요 키워드:", fontSize = 16.sp)
-
-            val groupedKeywords = it.keywords.groupBy { keyword -> keyword.label }
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                groupedKeywords.forEach { (label, keywords) ->
-                    Column {
-                        Text(text = label, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            keywords.forEach { keyword ->
-                                AssistChip(onClick = {}, label = { Text(keyword.text) })
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    groupedKeywords.forEach { (label, keywords) ->
+                        Column {
+                            Text(text = label, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                keywords.forEach { keyword ->
+                                    AssistChip(onClick = {}, label = { Text(keyword.text) })
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Text("🧠 감정 분석 (비율):", fontSize = 16.sp)
-            EmotionPieChart(emotions = it.emotions)
+                Text("🧠 감정 분석 (비율):", fontSize = 16.sp)
+                EmotionPieChart(emotions = it.emotions)
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = {
-                    val encodedRaw = URLEncoder.encode(diary!!.rawDiary, "UTF-8").replace("+", "%20")
-                    val today = LocalDate.now()
-                    navController.navigate("diary_edit/${diary!!.diaryId}/${today.year}/${today.monthValue}/${today.dayOfMonth}/$encodedRaw")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("수정하기")
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = {
+                            navigateEdit = true
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("수정하기")
+                    }
+
+                    Button(
+                        onClick = {
+                            showDeleteDialog = true
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    ) {
+                        Text("삭제하기", color = Color.White)
+                    }
+                }
             }
         }
     }

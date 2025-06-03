@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.shujinko.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.shujinko.app"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -121,10 +121,14 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.50")
-    kapt("com.google.dagger:hilt-compiler:2.50")
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-compiler:2.51")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // FlowRow
     implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
+
+    // calendar
+    implementation("com.kizitonwose.calendar:compose:2.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.6.0")
 }

@@ -2,15 +2,16 @@ package com.shujinko.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shujinko.app.data.DiaryRequest
-import com.shujinko.app.data.DiaryResponse
+import com.shujinko.app.data.Item.DiaryRequest
+import com.shujinko.app.data.Item.DiaryResponse
 import com.shujinko.app.data.remote.DiaryService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
-import androidx.compose.runtime.Composable
+import com.shujinko.app.data.Item.DiaryUpdate
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,6 +22,9 @@ class DiaryViewModel @Inject constructor(
     private val _diaryList = MutableStateFlow<List<DiaryResponse>>(emptyList())
     val diaryList: StateFlow<List<DiaryResponse>> = _diaryList
 
+    private val _diaryMap = MutableStateFlow<Map<LocalDate, DiaryResponse>>(emptyMap())
+    val diaryMap: StateFlow<Map<LocalDate, DiaryResponse>> = _diaryMap
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -29,6 +33,38 @@ class DiaryViewModel @Inject constructor(
 
     private val _todayDiary = MutableStateFlow<DiaryResponse?>(null)
     val todayDiary: StateFlow<DiaryResponse?> = _todayDiary
+
+    private val _shouldNavigate = MutableStateFlow(false)
+    val shouldNavigate: StateFlow<Boolean> = _shouldNavigate
+
+    fun resetShouldNavigate() {
+        _shouldNavigate.value = false
+    }
+
+    private val _writeCompleted = MutableStateFlow(false)
+    val writeCompleted: StateFlow<Boolean> = _writeCompleted
+
+    fun resetWriteCompleted() {
+        _writeCompleted.value = false
+    }
+
+    private val _initialRoute = MutableStateFlow<String?>(null)
+    val initialRoute: StateFlow<String?> = _initialRoute
+
+    fun checkTodayDiaryAndDecideRoute(token: String, year: Int, month: Int, day: Int) {
+        viewModelScope.launch {
+            try {
+                val response = diaryService.getDiary("Bearer $token", year, month, day)
+                _initialRoute.value = if (response.isSuccessful) "diary_result" else "diary_write"
+            } catch (e: Exception) {
+                _initialRoute.value = "diary_write" // 네트워크 오류 시에도 작성 화면으로
+            }
+        }
+    }
+
+    fun resetInitialRoute() {
+        _initialRoute.value = null
+    }
 
     fun getDiary(
         token: String,
@@ -46,16 +82,23 @@ class DiaryViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     val diary = response.body()
                     _todayDiary.value = diary
-                    Log.d("DiaryViewModel", "오늘 일기 불러오기 성공")
+                    Log.d("DiaryViewModel", "오름 일기 불러오기 성공")
+                    diary?.let {
+                        val date = LocalDate.of(year, month, day)
+                        _diaryMap.value = _diaryMap.value.toMutableMap().apply {
+                            put(date, it)
+                        }
+                    }
                     onComplete(true, diary)
                 } else {
-                    _errorMessage.value = "오늘 일기 없음 또는 불러오기 실패: ${response.code()}"
                     _todayDiary.value = null
-                    Log.w("DiaryViewModel", "getDiary 실패: ${response.code()}")
+                    val msg = "오름 일기 불러오기 실패: ${response.code()}"
+                    _errorMessage.value = msg
+                    Log.e("DiaryViewModel", msg)
                     onComplete(false, null)
                 }
             } catch (e: Exception) {
-                Log.e("DiaryViewModel", "getDiary 예외 발생", e)
+                Log.e("DiaryViewModel", "getDiary 예제 발생", e)
                 _errorMessage.value = "네트워크 오류 발생"
                 _todayDiary.value = null
                 onComplete(false, null)
@@ -73,7 +116,11 @@ class DiaryViewModel @Inject constructor(
             try {
                 val response = diaryService.getDiaryList("Bearer $token", year, month)
                 if (response.isSuccessful) {
-                    _diaryList.value = response.body() ?: emptyList()
+                    val diaries = response.body() ?: emptyList()
+                    _diaryList.value = diaries
+                    _diaryMap.value = diaries.associateBy {
+                        LocalDate.parse(it.createdAt.substringBefore("T"))
+                    }
                     Log.d("DiaryViewModel", "일기 목록 불러오기 성공")
                 } else {
                     _errorMessage.value = "일기 목록 불러오기 실패: ${response.code()}"
@@ -81,39 +128,57 @@ class DiaryViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "네트워크 오류 발생"
-                Log.e("DiaryViewModel", "loadDiaryList 예외", e)
+                Log.e("DiaryViewModel", "loadDiaryList 예제", e)
             }
 
             _isLoading.value = false
         }
     }
 
-    fun createDiary(token: String, rawDiary: String, onSuccess: () -> Unit) {
+    fun createDiary(
+        token: String,
+        rawDiary: String,
+        diaryDate: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
+            _writeCompleted.value = false
 
-            val request = DiaryRequest(rawDiary)
-            val response = diaryService.createDiary("Bearer $token", request)
+            val request = DiaryRequest(rawDiary = rawDiary, diaryDate = diaryDate)
 
-            if (response.isSuccessful) {
-                onSuccess()
-                //loadDiaryList(token)
-            } else {
-                _errorMessage.value = "일기 작성 실패: ${response.code()}"
-                Log.e("DiaryViewModel", "Failed to create diary: ${response.code()}")
+            try {
+                val response = diaryService.createDiary("Bearer $token", request)
+
+                if (response.isSuccessful) {
+                    Log.d("DiaryViewModel", "✅ 일기 작성 성공")
+                    _writeCompleted.value = true
+                    onSuccess()
+                } else {
+                    val msg = "❌ 일기 작성 실패: ${response.code()}"
+                    Log.e("DiaryViewModel", msg)
+                    onFailure(msg)
+                }
+
+            } catch (e: Exception) {
+                val error = "🔥 네트워크 에러: ${e.localizedMessage}"
+                Log.e("DiaryViewModel", error)
+                onFailure(error)
             }
 
             _isLoading.value = false
         }
     }
+
 
     fun updateDiary(token: String, id: Long, rawDiary: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
 
-            val request = DiaryRequest(rawDiary)
+            val request = DiaryUpdate(rawDiary)
             val response = diaryService.updateDiary("Bearer $token", id, request)
 
             if (response.isSuccessful) {
@@ -128,21 +193,18 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
-    fun deleteDiary(token: String, id: Long, onSuccess: () -> Unit) {
+    fun deleteDiary(token: String, diaryId: Long, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null
-
-            val response = diaryService.deleteDiary("Bearer $token", id)
-            if (response.isSuccessful) {
-                onSuccess()
-                //loadDiaryList(token)
-            } else {
-                _errorMessage.value = "일기 삭제 실패: ${response.code()}"
-                Log.e("DiaryViewModel", "Failed to delete diary: ${response.code()}")
+            try {
+                val response = diaryService.deleteDiary("Bearer $token", diaryId)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    Log.e("DiaryViewModel", "일기 삭제 실패: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("DiaryViewModel", "일기 삭제 예제", e)
             }
-
-            _isLoading.value = false
         }
     }
 }

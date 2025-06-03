@@ -1,6 +1,7 @@
 package com.shujinko.app.di
 
 import com.shujinko.app.data.remote.DiaryService
+import com.shujinko.app.data.remote.StatisticsService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,7 +17,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://13.211.58.141:8080/"
+    private const val BASE_URL = "http://43.201.212.34:8080/"
 
     @Provides
     @Singleton
@@ -25,8 +26,8 @@ object NetworkModule {
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             })
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
@@ -43,4 +44,9 @@ object NetworkModule {
     @Singleton
     fun provideDiaryService(retrofit: Retrofit): DiaryService =
         retrofit.create(DiaryService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideStatisticsService(retrofit: Retrofit): StatisticsService =
+        retrofit.create(StatisticsService::class.java)
 }

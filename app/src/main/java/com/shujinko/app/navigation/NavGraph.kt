@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.shujinko.app.ui.screen.*
 import com.shujinko.app.viewmodel.DiaryViewModel
 import com.shujinko.app.viewmodel.LoginViewModel
+import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
@@ -40,58 +41,6 @@ fun ShujinkoNavGraph(
                 diaryViewModel = diaryViewModel,
                 token = token
             )
-        }
-        composable(Screen.DiaryWrite.route) {
-            val diaryViewModel: DiaryViewModel = hiltViewModel()
-            DiaryWriteScreen(
-                navController = navController,
-                diaryViewModel = diaryViewModel,
-                token = token,
-                isEditMode = false,
-                initialText = "",
-                diaryId = null
-            )
-        }
-        composable("diary_edit/{id}/{year}/{month}/{day}/{rawDiary}") { backStackEntry ->
-            val diaryViewModel: DiaryViewModel = hiltViewModel()
-            val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
-            val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
-            val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
-            val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
-            val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
-
-            DiaryWriteScreen(
-                navController = navController,
-                diaryViewModel = diaryViewModel,
-                token = token,
-                isEditMode = true,
-                initialText = java.net.URLDecoder.decode(rawDiary, "UTF-8"),
-                diaryId = id
-            )
-        }
-        composable(
-            route = "delete_diary/{year}/{month}/{day}",
-            arguments = listOf(
-                navArgument("year") { type = NavType.IntType },
-                navArgument("month") { type = NavType.IntType },
-                navArgument("day") { type = NavType.IntType }
-            )
-        ) { backStackEntry ->
-            val year = backStackEntry.arguments?.getInt("year") ?: return@composable
-            val month = backStackEntry.arguments?.getInt("month") ?: return@composable
-            val day = backStackEntry.arguments?.getInt("day") ?: return@composable
-
-            val diaryViewModel: DiaryViewModel = hiltViewModel()
-            val token = token
-
-                DiaryDeleteScreen(
-                    year = year,
-                    month = month,
-                    day = day,
-                    navController = navController,
-                    diaryViewModel = diaryViewModel,
-                    token = token
-                )
         }
     }
 }
