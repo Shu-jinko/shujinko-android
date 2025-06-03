@@ -18,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.shujinko.app.ui.screen.DiaryWriteScreen
 import com.shujinko.app.ui.screen.StatisticsScreen
 import com.shujinko.app.viewmodel.StatisticsViewModel
+import com.shujinko.app.viewmodel.SuggestionViewModel
 import java.net.URLDecoder
 import java.time.temporal.WeekFields
 
@@ -80,10 +81,12 @@ fun HomeNavHost(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
             val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
+            val suggestionViewModel: SuggestionViewModel = hiltViewModel()
 
             DiaryWriteScreen(
                 navController = homeNavController,
                 diaryViewModel = diaryViewModel,
+                suggestionViewModel = suggestionViewModel,
                 token = token,
                 isEditMode = true,
                 initialText = URLDecoder.decode(rawDiary, "UTF-8"),

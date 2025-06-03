@@ -2,22 +2,34 @@ package com.shujinko.app.ui.screen
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.shujinko.app.viewmodel.DiaryViewModel
+import com.shujinko.app.viewmodel.SuggestionViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import java.time.LocalDate
 
+@OptIn(FlowPreview::class)
 @Composable
 fun DiaryWriteScreen(
     navController: NavController,
     parentNavController: NavController,
     diaryViewModel: DiaryViewModel,
+    suggestionViewModel: SuggestionViewModel,
     token: String,
     isEditMode: Boolean = false,
     diaryId: Long? = null,
@@ -30,6 +42,12 @@ fun DiaryWriteScreen(
     val errorMessage by diaryViewModel.errorMessage.collectAsState()
     val navigateState by diaryViewModel.shouldNavigate.collectAsState()
     val writeCompleted by diaryViewModel.writeCompleted.collectAsState()
+    val suggestion by suggestionViewModel.suggestion.collectAsState()
+    var lastSuggestedText by remember { mutableStateOf("") }
+    val suggestionLoading by suggestionViewModel.isLoading.collectAsState()
+    val suggestionError by suggestionViewModel.errorMessage.collectAsState()
+    var typingDelayProgress by remember { mutableStateOf(0f) } // 0.0 ~ 1.0
+
     val context = LocalContext.current
 
     // ✅ 일기 없을 때 → diary_entry로 이동
@@ -56,10 +74,43 @@ fun DiaryWriteScreen(
             }
     }
 
+    LaunchedEffect(Unit) {
+        suggestionViewModel.fetchSuggestion(token, "") // 빈 일기라도 요청
+        lastSuggestedText = ""
+    }
+
+    LaunchedEffect(text) {
+        if (text.isBlank()) {
+            typingDelayProgress = 0f
+            return@LaunchedEffect
+        }
+
+        var elapsed = 0
+        while (elapsed < 3000) {
+            delay(100)
+            elapsed += 100
+            typingDelayProgress = elapsed / 3000f
+        }
+
+        if (text != lastSuggestedText) {
+            suggestionViewModel.fetchSuggestion(token, text)
+            lastSuggestedText = text
+        }
+
+        typingDelayProgress = 0f
+    }
+
+
     // 에러 메시지 Toast
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(suggestionError) {
+        suggestionError?.let {
+            Toast.makeText(context, "AI 제안 오류: $it", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -75,6 +126,57 @@ fun DiaryWriteScreen(
                 fontSize = 20.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            // 로딩 인디케이터 (AI 제안 중일 때)
+            if (suggestionLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+            } else if (typingDelayProgress > 0f) {
+                LinearProgressIndicator(
+                    progress = typingDelayProgress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+            }
+
+
+            suggestion?.let {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF6FF))
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "✍️ AI 제안: $it",
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(16.dp),
+                            fontSize = 14.sp
+                        )
+
+                        IconButton(
+                            onClick = {
+                                suggestionViewModel.fetchSuggestion(token, text)
+                                lastSuggestedText = text
+                            },
+                            modifier = Modifier.align(Alignment.TopEnd)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Lightbulb,
+                                contentDescription = "AI 제안 새로고침"
+                            )
+                        }
+                    }
+                }
+            }
 
             TextField(
                 value = text,
