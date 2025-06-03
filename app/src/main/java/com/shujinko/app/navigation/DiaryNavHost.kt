@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,6 +17,7 @@ import androidx.navigation.navArgument
 import com.shujinko.app.ui.screen.DiaryResultScreen
 import com.shujinko.app.ui.screen.DiaryWriteScreen
 import com.shujinko.app.viewmodel.DiaryViewModel
+import com.shujinko.app.viewmodel.SuggestionViewModel
 import java.net.URLDecoder
 import java.time.LocalDate
 
@@ -77,9 +79,12 @@ fun DiaryNavHost(
         }
 
         composable("diary_write") {
+            val suggestionViewModel: SuggestionViewModel = hiltViewModel()
+
             DiaryWriteScreen(
                 navController = diaryNavController,
                 diaryViewModel = diaryViewModel,
+                suggestionViewModel = suggestionViewModel,
                 token = token,
                 isEditMode = false,
                 initialText = "",
@@ -112,10 +117,12 @@ fun DiaryNavHost(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
             val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
+            val suggestionViewModel: SuggestionViewModel = hiltViewModel()
 
             DiaryWriteScreen(
                 navController = diaryNavController,
                 diaryViewModel = diaryViewModel,
+                suggestionViewModel = suggestionViewModel,
                 token = token,
                 isEditMode = true,
                 initialText = URLDecoder.decode(rawDiary, "UTF-8"),
