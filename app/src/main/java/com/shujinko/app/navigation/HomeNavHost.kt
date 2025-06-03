@@ -16,7 +16,10 @@ import com.shujinko.app.viewmodel.DiaryViewModel
 import java.time.LocalDate
 import androidx.compose.runtime.LaunchedEffect
 import com.shujinko.app.ui.screen.DiaryWriteScreen
+import com.shujinko.app.ui.screen.StatisticsScreen
+import com.shujinko.app.viewmodel.StatisticsViewModel
 import java.net.URLDecoder
+import java.time.temporal.WeekFields
 
 
 @Composable
@@ -38,8 +41,10 @@ fun HomeNavHost(
             )
         }
         composable("diary_stats") {
-            //DiaryStatsScreen()
+            val statsViewModel: StatisticsViewModel = hiltViewModel()
+            StatisticsScreen(viewModel = statsViewModel, token = token)
         }
+
         composable("diary_calendar") {
             val diaryViewModel: DiaryViewModel = hiltViewModel()
             val diaryMap = diaryViewModel.diaryMap.collectAsState().value

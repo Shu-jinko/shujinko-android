@@ -1,4 +1,4 @@
-package com.shujinko.app.data
+package com.shujinko.app.data.Item
 
 data class DiaryRequest(
     val rawDiary: String,

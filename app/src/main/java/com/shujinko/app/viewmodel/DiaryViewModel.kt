@@ -2,14 +2,14 @@ package com.shujinko.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shujinko.app.data.DiaryRequest
-import com.shujinko.app.data.DiaryResponse
+import com.shujinko.app.data.Item.DiaryRequest
+import com.shujinko.app.data.Item.DiaryResponse
 import com.shujinko.app.data.remote.DiaryService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
-import com.shujinko.app.data.DiaryUpdate
+import com.shujinko.app.data.Item.DiaryUpdate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject

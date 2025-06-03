@@ -10,22 +10,14 @@ import com.shujinko.app.viewmodel.DiaryViewModel
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
 import androidx.navigation.NavController
-import com.shujinko.app.data.Emotion
-import com.shujinko.app.navigation.Screen
+import com.shujinko.app.data.Item.Emotion
 import java.net.URLEncoder
-import java.time.LocalDate
-import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 

@@ -16,7 +16,7 @@ import java.time.YearMonth
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.core.WeekDay
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
-import com.shujinko.app.data.DiaryResponse
+import com.shujinko.app.data.Item.DiaryResponse
 
 @Composable
 fun DiaryCalendarScreen(

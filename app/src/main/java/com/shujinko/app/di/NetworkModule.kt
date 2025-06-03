@@ -1,6 +1,7 @@
 package com.shujinko.app.di
 
 import com.shujinko.app.data.remote.DiaryService
+import com.shujinko.app.data.remote.StatisticsService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,4 +44,9 @@ object NetworkModule {
     @Singleton
     fun provideDiaryService(retrofit: Retrofit): DiaryService =
         retrofit.create(DiaryService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideStatisticsService(retrofit: Retrofit): StatisticsService =
+        retrofit.create(StatisticsService::class.java)
 }
