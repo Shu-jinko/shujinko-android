@@ -35,9 +35,12 @@ fun HomeNavHost(
         startDestination = "home"
     ) {
         composable("home") {
+            val statsViewModel: StatisticsViewModel = hiltViewModel()
             HomeScreen(
                 onClickStats = { homeNavController.navigate("diary_stats") },
-                onClickCalendar = { homeNavController.navigate("diary_calendar") }
+                onClickCalendar = { homeNavController.navigate("diary_calendar") },
+                viewModel = statsViewModel,
+                token = token
             )
         }
         composable("diary_stats") {
