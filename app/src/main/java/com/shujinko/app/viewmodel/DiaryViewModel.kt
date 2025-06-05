@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
 import com.shujinko.app.data.Item.DiaryUpdate
+import com.shujinko.app.data.Item.createDiaryMultipart
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -172,6 +174,36 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
+    fun createDiaryWithImages(
+        token: String,
+        rawDiary: String,
+        diaryDate: String,
+        imageFiles: List<File>,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            _writeCompleted.value = false
+
+            val (createParam, imageParts) = createDiaryMultipart(rawDiary, diaryDate, imageFiles)
+
+            try {
+                val response = diaryService.uploadPhotoDiary(token, createParam, imageParts)
+                if (response.isSuccessful) {
+                    _writeCompleted.value = true
+                    onSuccess()
+                } else {
+                    onFailure("일기+이미지 작성 실패: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onFailure("네트워크 오류: ${e.localizedMessage}")
+            }
+
+            _isLoading.value = false
+        }
+    }
 
     fun updateDiary(token: String, id: Long, rawDiary: String, onSuccess: () -> Unit) {
         viewModelScope.launch {

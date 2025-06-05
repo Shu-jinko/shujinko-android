@@ -3,6 +3,8 @@ package com.shujinko.app.data.remote
 import com.shujinko.app.data.Item.DiaryRequest
 import com.shujinko.app.data.Item.DiaryResponse
 import com.shujinko.app.data.Item.DiaryUpdate
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -27,6 +29,14 @@ interface DiaryService {
     suspend fun createDiary(
         @Header("Authorization") token: String,
         @Body request: DiaryRequest
+    ): Response<Void>
+
+    @Multipart
+    @POST("/diary/photoDiary")
+    suspend fun uploadPhotoDiary(
+        @Header("Authorization") token: String,
+        @Part("createParam") createParam: RequestBody,
+        @Part images: List<MultipartBody.Part>
     ): Response<Void>
 
     @PATCH("diary/{id}")
