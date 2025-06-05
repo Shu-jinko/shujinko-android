@@ -5,6 +5,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import com.google.gson.Gson
+import okhttp3.Headers
 import org.json.JSONObject
 import java.io.File
 
@@ -48,24 +50,28 @@ data class Paragraph(
     val image_caption: String
 )
 
-// Helper function for Multipart Upload
-fun createDiaryMultipart(
+fun createDiaryMultipartParts(
     rawDiaryText: String,
     diaryDateText: String,
     imageFiles: List<File>
-): Pair<RequestBody, List<MultipartBody.Part>> {
+): Pair<MultipartBody.Part, List<MultipartBody.Part>> {
+    // JSON 문자열을 RequestBody로 만든 후, MultipartBody.Part로 감쌈
     val diaryJson = JSONObject().apply {
         put("rawDiary", rawDiaryText)
         put("diaryDate", diaryDateText)
     }.toString()
 
-    val createParamBody = diaryJson
-        .toRequestBody("application/json; charset=utf-8".toMediaType())
+    val jsonRequestBody = diaryJson
+        .toRequestBody("application/json".toMediaType())
+
+    val createParamPart = MultipartBody.Part.createFormData(
+        "createParam", null, jsonRequestBody
+    )
 
     val imageParts = imageFiles.map { file ->
         val requestFile = file.asRequestBody("image/*".toMediaType())
         MultipartBody.Part.createFormData("images", file.name, requestFile)
     }
 
-    return Pair(createParamBody, imageParts)
+    return Pair(createParamPart, imageParts)
 }

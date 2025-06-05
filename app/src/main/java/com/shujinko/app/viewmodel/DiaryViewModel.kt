@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
 import com.shujinko.app.data.Item.DiaryUpdate
-import com.shujinko.app.data.Item.createDiaryMultipart
+import com.shujinko.app.data.Item.createDiaryMultipartParts
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.time.LocalDate
@@ -187,10 +187,14 @@ class DiaryViewModel @Inject constructor(
             _errorMessage.value = null
             _writeCompleted.value = false
 
-            val (createParam, imageParts) = createDiaryMultipart(rawDiary, diaryDate, imageFiles)
+            val (createParamPart, imageParts) = createDiaryMultipartParts(rawDiary, diaryDate, imageFiles)
 
             try {
-                val response = diaryService.uploadPhotoDiary(token, createParam, imageParts)
+                val response = diaryService.uploadPhotoDiary(
+                    token = "Bearer $token",
+                    createParam = createParamPart,
+                    images = imageParts
+                )
                 if (response.isSuccessful) {
                     _writeCompleted.value = true
                     onSuccess()
@@ -204,6 +208,7 @@ class DiaryViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+
 
     fun updateDiary(token: String, id: Long, rawDiary: String, onSuccess: () -> Unit) {
         viewModelScope.launch {

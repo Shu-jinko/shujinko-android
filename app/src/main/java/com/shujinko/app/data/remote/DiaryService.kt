@@ -35,7 +35,7 @@ interface DiaryService {
     @POST("/diary/photoDiary")
     suspend fun uploadPhotoDiary(
         @Header("Authorization") token: String,
-        @Part("createParam") createParam: RequestBody,
+        @Part createParam: MultipartBody.Part,
         @Part images: List<MultipartBody.Part>
     ): Response<Void>
 
