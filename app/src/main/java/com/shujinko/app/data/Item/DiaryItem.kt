@@ -24,7 +24,7 @@ data class DiaryUpdate(
 data class DiaryResponse(
     val diaryId: Long,
     val rawDiary: String,
-    val rephrasedDiary: String,
+    val rephrasedDiary: String?,
     val createdAt: String,
     val summary: String,
     val label: String,
@@ -44,10 +44,10 @@ data class Emotion(
 )
 
 data class Paragraph(
-    val subject: String,
-    val content: String,
-    val matched_image: String,
-    val image_caption: String
+    val subject: String?,
+    val content: String?,
+    val matched_image: String?,
+    val image_caption: String?
 )
 
 fun createDiaryMultipartParts(

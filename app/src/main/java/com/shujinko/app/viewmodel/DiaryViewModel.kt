@@ -137,6 +137,32 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
+    fun fetchDiaryImage(
+        token: String,
+        fileName: String,
+        onSuccess: (ByteArray) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = diaryService.getDiaryImage("Bearer $token", fileName)
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null) {
+                        onSuccess(bytes)
+                    } else {
+                        onFailure("이미지 데이터가 없습니다.")
+                    }
+                } else {
+                    onFailure("이미지 요청 실패: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("DiaryViewModel", "fetchDiaryImage 에러", e)
+                onFailure("네트워크 오류: ${e.localizedMessage}")
+            }
+        }
+    }
+
     fun createDiary(
         token: String,
         rawDiary: String,

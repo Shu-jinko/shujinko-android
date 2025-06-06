@@ -25,6 +25,13 @@ interface DiaryService {
         @Query("month") month: Int
     ): Response<List<DiaryResponse>>
 
+    @GET("/diary/images/{fileName}")
+    @Streaming
+    suspend fun getDiaryImage(
+        @Header("Authorization") token: String,
+        @Path("fileName") fileName: String
+    ): Response<okhttp3.ResponseBody>
+
     @POST("diary")
     suspend fun createDiary(
         @Header("Authorization") token: String,

@@ -10,13 +10,19 @@ import com.shujinko.app.viewmodel.DiaryViewModel
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
+import coil.ImageLoader
+import coil.compose.LocalImageLoader
+import coil.compose.rememberAsyncImagePainter
 import com.shujinko.app.data.Item.Emotion
+import okhttp3.OkHttpClient
 import java.net.URLEncoder
 import kotlin.math.cos
 import kotlin.math.sin
@@ -117,7 +123,14 @@ fun DiaryResultScreen(
 
                 Text("✍️ 재작성된 일기:", fontSize = 16.sp)
                 Text(
-                    text = it.rephrasedDiary,
+                    text = it.rephrasedDiary.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                Text("📄 요약:", fontSize = 16.sp)
+                Text(
+                    text = it.summary,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(8.dp)
                 )
@@ -146,6 +159,58 @@ fun DiaryResultScreen(
 
                 Text("🧠 감정 분석 (비율):", fontSize = 16.sp)
                 EmotionPieChart(emotions = it.emotions)
+
+                Text("🖼️ 문단별 이미지 및 내용:", fontSize = 16.sp)
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    it.paragraph.forEachIndexed { index, paragraph ->
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("• 주제 ${index + 1}: ${paragraph.subject ?: "제목 없음"}")
+                            Text("내용: ${paragraph.content ?: "내용 없음"}")
+
+                            if (!paragraph.matched_image.isNullOrBlank()) {
+                                Text("이미지 설명: ${paragraph.image_caption ?: "설명 없음"}")
+
+                                // ✅ 새로운 보안 이미지 API 경로 구성
+                                val fileName = paragraph.matched_image.substringAfterLast("/")
+                                val imageUrl = "http://43.201.212.34:8080/diary/images/$fileName"
+
+                                // ✅ 인증 헤더 포함 ImageLoader 생성
+                                val context = LocalContext.current
+                                val imageLoader = remember {
+                                    ImageLoader.Builder(context)
+                                        .okHttpClient {
+                                            OkHttpClient.Builder()
+                                                .addInterceptor { chain ->
+                                                    val request = chain.request().newBuilder()
+                                                        .addHeader("Authorization", "Bearer $token")
+                                                        .build()
+                                                    chain.proceed(request)
+                                                }
+                                                .build()
+                                        }
+                                        .build()
+                                }
+
+                                // ✅ Coil에 ImageLoader 주입 후 이미지 로딩
+                                CompositionLocalProvider(LocalImageLoader provides imageLoader) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(imageUrl),
+                                        contentDescription = paragraph.image_caption ?: "이미지",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
