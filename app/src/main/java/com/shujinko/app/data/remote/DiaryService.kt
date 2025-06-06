@@ -46,12 +46,15 @@ interface DiaryService {
         @Part images: List<MultipartBody.Part>
     ): Response<Void>
 
-    @PATCH("diary/{id}")
-    suspend fun updateDiary(
+    @Multipart
+    @PATCH("/diary/photoDiary/{id}")
+    suspend fun updatePhotoDiary(
         @Header("Authorization") token: String,
         @Path("id") id: Long,
-        @Body request: DiaryUpdate
+        @Part updateParam: MultipartBody.Part,
+        @Part images: List<MultipartBody.Part>
     ): Response<Void>
+
 
     @DELETE("diary/{id}")
     suspend fun deleteDiary(@Header("Authorization") token: String, @Path("id") id: Long): Response<Void>

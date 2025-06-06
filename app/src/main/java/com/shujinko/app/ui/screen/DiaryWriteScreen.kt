@@ -34,6 +34,9 @@ import kotlinx.coroutines.isActive
 import java.time.LocalDate
 import androidx.compose.foundation.lazy.items
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+
 
 @OptIn(FlowPreview::class)
 @Composable
@@ -50,7 +53,7 @@ fun DiaryWriteScreen(
     var text by remember { mutableStateOf(initialText) }
     var hasNavigated by remember { mutableStateOf(false) }
     var lastSuggestedText by remember { mutableStateOf("") }
-    var typingDelayProgress by remember { mutableFloatStateOf(0f) } // 0.0 ~ 1.0
+    var typingDelayProgress by remember { mutableFloatStateOf(0f) }
 
     val isLoading by diaryViewModel.isLoading.collectAsState()
     val errorMessage by diaryViewModel.errorMessage.collectAsState()
@@ -63,15 +66,28 @@ fun DiaryWriteScreen(
     val context = LocalContext.current
 
     val imageUris = remember { mutableStateListOf<Uri>() }
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris: List<Uri> ->
-        imageUris.clear()
-        imageUris.addAll(uris)
+    ) { uris ->
+        uris.forEach { uri ->
+            if (!imageUris.contains(uri)) imageUris.add(uri)
+        }
     }
 
-    // ✅ 일기 없을 때 → diary_entry로 이동
+    LaunchedEffect(isEditMode, diaryId) {
+        if (isEditMode && diaryId != null) {
+            diaryViewModel.getDiary(token, LocalDate.now().year, LocalDate.now().monthValue, LocalDate.now().dayOfMonth) { success, diary ->
+                diary?.paragraph?.forEach { para ->
+                    if (!para.matched_image.isNullOrBlank()) {
+                        val imageUrl = "http://43.201.212.34:8080/diary/images/" + para.matched_image.substringAfterLast("/")
+                        imageUris.add(Uri.parse(imageUrl))
+                    }
+                }
+                text = diary?.rawDiary ?: ""
+            }
+        }
+    }
+
     LaunchedEffect(navigateState) {
         if (navigateState && !hasNavigated && coroutineContext.isActive) {
             hasNavigated = true
@@ -82,21 +98,19 @@ fun DiaryWriteScreen(
         }
     }
 
-    // ✅ 작성 완료 → diary_result로 이동
     LaunchedEffect(Unit) {
-        snapshotFlow { writeCompleted }
-            .collect { completed ->
-                if (completed) {
-                    navController.navigate("diary_result") {
-                        launchSingleTop = true
-                    }
-                    diaryViewModel.resetWriteCompleted()
+        snapshotFlow { writeCompleted }.collect {
+            if (it) {
+                navController.navigate("diary_result") {
+                    launchSingleTop = true
                 }
+                diaryViewModel.resetWriteCompleted()
             }
+        }
     }
 
     LaunchedEffect(Unit) {
-        suggestionViewModel.fetchSuggestion(token, "") // 빈 일기라도 요청
+        suggestionViewModel.fetchSuggestion(token, "")
         lastSuggestedText = ""
     }
 
@@ -105,30 +119,24 @@ fun DiaryWriteScreen(
             typingDelayProgress = 0f
             return@LaunchedEffect
         }
-
         var elapsed = 0
         while (elapsed < 3000) {
             delay(100)
             elapsed += 100
             typingDelayProgress = elapsed / 3000f
         }
-
         if (text != lastSuggestedText) {
             suggestionViewModel.fetchSuggestion(token, text)
             lastSuggestedText = text
         }
-
         typingDelayProgress = 0f
     }
 
-
-    // 에러 메시지 Toast
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
-
     LaunchedEffect(suggestionError) {
         suggestionError?.let {
             Toast.makeText(context, "AI 제안 오류: $it", Toast.LENGTH_SHORT).show()
@@ -136,9 +144,7 @@ fun DiaryWriteScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
@@ -147,42 +153,18 @@ fun DiaryWriteScreen(
                 fontSize = 20.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
-
-            // 로딩 인디케이터 (AI 제안 중일 때)
             if (suggestionLoading) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
             } else if (typingDelayProgress > 0f) {
-                LinearProgressIndicator(
-                    progress = typingDelayProgress,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
+                LinearProgressIndicator(typingDelayProgress, Modifier.fillMaxWidth().padding(bottom = 8.dp))
             }
-
-
             suggestion?.let {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF6FF))
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "✍️ AI 제안: $it",
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .padding(16.dp),
-                            fontSize = 14.sp
-                        )
-
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Text("✍️ AI 제안: $it", Modifier.align(Alignment.CenterStart).padding(16.dp), fontSize = 14.sp)
                         IconButton(
                             onClick = {
                                 suggestionViewModel.fetchSuggestion(token, text)
@@ -190,117 +172,113 @@ fun DiaryWriteScreen(
                             },
                             modifier = Modifier.align(Alignment.TopEnd)
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Lightbulb,
-                                contentDescription = "AI 제안 새로고침"
-                            )
+                            Icon(Icons.Outlined.Lightbulb, contentDescription = "AI 제안 새로고침")
                         }
                     }
                 }
             }
-
             TextField(
                 value = text,
                 onValueChange = { text = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp),
+                modifier = Modifier.fillMaxWidth().height(300.dp),
                 placeholder = { Text("오늘 하루를 자유롭게 적어보세요!") }
             )
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
+            Modifier.fillMaxWidth().padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Button(onClick = { imagePickerLauncher.launch("image/*") }) {
                 Text("사진 추가")
             }
-
             if (imageUris.isNotEmpty()) {
-                Text("${imageUris.size}장 선택됨", modifier = Modifier.align(Alignment.CenterVertically))
+                Text("${imageUris.size}장 선택됨", Modifier.align(Alignment.CenterVertically))
             }
         }
 
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            items(imageUris) { uri -> // 여기!
-                Box(
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(80.dp)
-                ) {
+        LazyRow(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            items(imageUris) { uri ->
+                Box(Modifier.padding(end = 8.dp).size(80.dp)) {
                     Image(
                         painter = rememberAsyncImagePainter(uri),
-                        contentDescription = "선택한 이미지",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(8.dp))
+                        contentDescription = "이미지",
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
                     )
-
                     IconButton(
-                        onClick = { imageUris.remove(uri)}, // remove 함수로 수정
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .background(Color.Black.copy(alpha = 0.5f), shape = CircleShape)
-                            .size(24.dp)
+                        onClick = { imageUris.remove(uri) },
+                        modifier = Modifier.align(Alignment.TopEnd).background(Color.Black.copy(alpha = 0.5f), CircleShape).size(24.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "삭제",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
+                        Icon(Icons.Default.Close, contentDescription = "삭제", tint = Color.White, modifier = Modifier.size(16.dp))
                     }
                 }
             }
         }
+
+        val coroutineScope = rememberCoroutineScope()
 
         Button(
             onClick = {
-                val todayStr = LocalDate.now().toString()
+                coroutineScope.launch {
+                    val todayStr = LocalDate.now().toString()
 
-                val imageFiles = imageUris.mapNotNull { uri ->
-                    try {
-                        val inputStream = context.contentResolver.openInputStream(uri)
-                        val tempFile = kotlin.io.path.createTempFile(suffix = ".jpg").toFile()
-                        inputStream?.use { input -> tempFile.outputStream().use { input.copyTo(it) } }
-                        tempFile
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        null
+                    // 새로 선택한 이미지 (갤러리에서 고른 content:// 등)
+                    val newImageFiles = imageUris.filter { !it.toString().startsWith("http") }.mapNotNull { uri ->
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(uri)
+                            val tempFile = kotlin.io.path.createTempFile(suffix = ".jpg").toFile()
+                            inputStream?.use { input -> tempFile.outputStream().use { input.copyTo(it) } }
+                            tempFile
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            null
+                        }
+                    }
+
+                    // 기존 서버 이미지 처리
+                    val serverFileNames = imageUris
+                        .filter { it.toString().startsWith("http") }
+                        .mapNotNull { uri -> uri.toString().substringAfterLast("/").ifBlank { null } }
+
+                    val downloadedFiles = diaryViewModel.fetchImagesAsFiles(
+                        token = token,
+                        fileNames = serverFileNames,
+                        cacheDir = context.cacheDir
+                    )
+
+                    val allFiles = downloadedFiles + newImageFiles
+
+                    if (isEditMode && diaryId != null) {
+                        diaryViewModel.updateDiaryWithImages(
+                            token = token,
+                            id = diaryId,
+                            rawDiary = text,
+                            imageFiles = allFiles,
+                            onSuccess = { println("✅ 수정 성공") },
+                            onFailure = { println("❌ 수정 실패: $it") }
+                        )
+                    } else {
+                        diaryViewModel.createDiaryWithImages(
+                            token = token,
+                            rawDiary = text,
+                            diaryDate = todayStr,
+                            imageFiles = allFiles,
+                            onSuccess = { println("✅ 작성 완료") },
+                            onFailure = { println("❌ 작성 실패: $it") }
+                        )
                     }
                 }
-
-                diaryViewModel.createDiaryWithImages(
-                    token = token,
-                    rawDiary = text,
-                    diaryDate = todayStr,
-                    imageFiles = imageFiles,
-                    onSuccess = {
-                        println("✅ 이미지 포함 일기 작성 완료")
-                    },
-                    onFailure = { error ->
-                        println("❌ 이미지 포함 작성 실패: $error")
-                    }
-                )
             },
             enabled = !isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
             if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                Text("작성 완료")
+                Text(if (isEditMode) "수정 완료" else "작성 완료")
             }
         }
+
+
     }
 }

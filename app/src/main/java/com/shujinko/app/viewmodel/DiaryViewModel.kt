@@ -12,9 +12,24 @@ import android.util.Log
 import com.shujinko.app.data.Item.DiaryUpdate
 import com.shujinko.app.data.Item.createDiaryMultipartParts
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.io.use
+
 
 @HiltViewModel
 class DiaryViewModel @Inject constructor(
@@ -235,21 +250,49 @@ class DiaryViewModel @Inject constructor(
         }
     }
 
-
-    fun updateDiary(token: String, id: Long, rawDiary: String, onSuccess: () -> Unit) {
+    fun updateDiaryWithImages(
+        token: String,
+        id: Long,
+        rawDiary: String,
+        imageFiles: List<File>,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
 
-            val request = DiaryUpdate(rawDiary)
-            val response = diaryService.updateDiary("Bearer $token", id, request)
+            try {
+                // JSON 문자열 생성
+                val updateJson = JSONObject().apply {
+                    put("rawDiary", rawDiary)
+                }.toString()
 
-            if (response.isSuccessful) {
-                onSuccess()
-                //loadDiaryList(token)
-            } else {
-                _errorMessage.value = "일기 수정 실패: ${response.code()}"
-                Log.e("DiaryViewModel", "Failed to update diary: ${response.code()}")
+                val updateRequestBody = updateJson
+                    .toRequestBody("application/json".toMediaType())
+                val updateParamPart = MultipartBody.Part.createFormData("updateParam", null, updateRequestBody)
+
+                // 이미지들 처리
+                val imageParts = imageFiles.map { file ->
+                    val requestFile = file.asRequestBody("image/*".toMediaType())
+                    MultipartBody.Part.createFormData("images", file.name, requestFile)
+                }
+
+                val response = diaryService.updatePhotoDiary(
+                    token = "Bearer $token",
+                    id = id,
+                    updateParam = updateParamPart,
+                    images = imageParts
+                )
+
+                if (response.isSuccessful) {
+                    _writeCompleted.value = true
+                    onSuccess()
+                } else {
+                    onFailure("❌ 수정 실패: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onFailure("🔥 네트워크 오류: ${e.localizedMessage}")
             }
 
             _isLoading.value = false
@@ -270,4 +313,32 @@ class DiaryViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun fetchImagesAsFiles(
+        token: String,
+        fileNames: List<String>,
+        cacheDir: File
+    ): List<File> = withContext(Dispatchers.IO) {
+        fileNames.mapNotNull { fileName ->
+            try {
+                val response = diaryService.getDiaryImage("Bearer $token", fileName)
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null) {
+                        val file = File(cacheDir, fileName)
+                        FileOutputStream(file).use { it.write(bytes) }
+                        file
+                    } else {
+                        null
+                    }
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                Log.e("DiaryViewModel", "fetchImagesAsFiles 실패: $fileName", e)
+                null
+            }
+        }
+    }
+
 }
