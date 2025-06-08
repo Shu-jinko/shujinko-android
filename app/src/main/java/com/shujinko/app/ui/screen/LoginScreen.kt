@@ -23,7 +23,6 @@ import com.shujinko.app.viewmodel.LoginViewModel
 fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
     val context = LocalContext.current
 
-    // Google Sign-In Options 설정
     val gso = remember { provideGoogleSignInOptions(context) }
     val signInClient = remember { GoogleSignIn.getClient(context, gso) }
 
@@ -38,9 +37,18 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
                 if (success && idToken != null) {
                     Log.d("Login", "idToken = $idToken")
 
-                    viewModel.sendTokenToServer(idToken) { result ->
-                        if (result) {
-                            onLoginSuccess()
+                    viewModel.sendTokenToServer(idToken) { serverResult ->
+                        if (serverResult) {
+                            // ✅ 생일 가져오기 추가
+                            viewModel.fetchBirthday(account) { birthdayJson ->
+                                if (birthdayJson != null) {
+                                    Log.d("Birthday", "🎂 생일 데이터: $birthdayJson")
+                                    // TODO: 생일 정보 파싱 및 저장 처리 (필요 시)
+                                } else {
+                                    Log.e("Birthday", "생일 정보 가져오기 실패")
+                                }
+                                onLoginSuccess() // 성공 후 이동
+                            }
                         } else {
                             Log.e("Login", "서버 로그인 실패")
                         }
@@ -75,3 +83,4 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
         }
     }
 }
+

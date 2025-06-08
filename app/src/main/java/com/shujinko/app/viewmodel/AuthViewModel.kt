@@ -1,10 +1,11 @@
-package com.shujinko.app.repository
+package com.shujinko.app.viewmodel
 
 import android.content.Context
 import android.util.Log
 import com.shujinko.app.data.remote.AuthService
 import com.shujinko.app.utils.TokenStore
-class AuthRepository(private val authService: AuthService) {
+
+class AuthViewModel(private val authService: AuthService) {
 
     suspend fun login(context: Context, idToken: String): Boolean {
         return try {
