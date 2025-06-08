@@ -1,8 +1,11 @@
 package com.shujinko.app.di
 
+import com.shujinko.app.data.remote.AuthService
 import com.shujinko.app.data.remote.DiaryService
 import com.shujinko.app.data.remote.StatisticsService
 import com.shujinko.app.data.remote.SuggestionService
+import com.shujinko.app.data.remote.UserService
+import com.shujinko.app.data.repository.AuthRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,6 +44,20 @@ object NetworkModule {
             .client(client)
             .build()
 
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object RepositoryModule {
+        @Provides
+        @Singleton
+        fun provideAuthRepository(authService: AuthService): AuthRepository =
+            AuthRepository(authService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthService(retrofit: Retrofit): AuthService =
+        retrofit.create(AuthService::class.java)
+
     @Provides
     @Singleton
     fun provideDiaryService(retrofit: Retrofit): DiaryService =
@@ -55,4 +72,9 @@ object NetworkModule {
     @Singleton
     fun provideSuggestionService(retrofit: Retrofit): SuggestionService =
         retrofit.create(SuggestionService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUserService(retrofit: Retrofit): UserService =
+        retrofit.create(UserService::class.java)
 }

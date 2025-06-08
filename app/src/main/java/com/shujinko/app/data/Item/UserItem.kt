@@ -6,7 +6,7 @@ data class User(
     val birthday: String
 )
 
-data class LoginRequest(
-    val idToken: String,
-    val birthday: String? = null
+data class UpdateUserRequest(
+    val name: String,
+    val birthday: String
 )

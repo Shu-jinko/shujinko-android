@@ -1,25 +1,28 @@
 package com.shujinko.app.viewmodel
 
-import android.app.Application
+import android.content.Context
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.shujinko.app.data.remote.RetrofitClient
+import com.shujinko.app.data.repository.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.inject.Inject
 
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _account = MutableLiveData<GoogleSignInAccount?>()
     val account: LiveData<GoogleSignInAccount?> = _account
@@ -28,10 +31,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val authRepository = AuthViewModel(RetrofitClient.authService)
-
     fun checkExistingSignIn() {
-        val account = GoogleSignIn.getLastSignedInAccount(getApplication())
+        val account = GoogleSignIn.getLastSignedInAccount(context)
         _account.value = account
     }
 
@@ -59,46 +60,27 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
-    // ✅ 생일도 함께 보내도록 수정
     fun sendTokenToServer(idToken: String, birthday: String?, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val context = getApplication<Application>().applicationContext
             val result = authRepository.login(context, idToken, birthday)
             onComplete(result)
         }
     }
 
     fun tryAutoLogin(onSuccess: () -> Unit, onFail: () -> Unit) {
-        val context = getApplication<Application>().applicationContext
         viewModelScope.launch {
-            try {
-                val refreshToken = com.shujinko.app.utils.TokenStore
-                    .getRefreshToken(context)
-                    .firstOrNull()
-
-                if (refreshToken.isNullOrBlank()) {
-                    Log.d("AutoLogin", "리프레시 토큰 없음")
-                    onFail()
-                    return@launch
-                }
-
-                val result = authRepository.refresh(context, refreshToken)
-                if (result) {
-                    Log.d("AutoLogin", "자동 로그인 성공")
-                    onSuccess()
-                } else {
-                    Log.d("AutoLogin", "자동 로그인 실패")
-                    onFail()
-                }
-            } catch (e: Exception) {
-                Log.e("AutoLogin", "자동 로그인 중 예외 발생", e)
+            val result = authRepository.refresh(context)
+            if (result) {
+                Log.d("AutoLogin", "자동 로그인 성공")
+                onSuccess()
+            } else {
+                Log.d("AutoLogin", "자동 로그인 실패")
                 onFail()
             }
         }
     }
 
     fun fetchBirthday(account: GoogleSignInAccount, onResult: (String?) -> Unit) {
-        val context = getApplication<Application>().applicationContext
         val scope = "oauth2:https://www.googleapis.com/auth/user.birthday.read"
 
         viewModelScope.launch(Dispatchers.IO) {
