@@ -7,9 +7,14 @@ import com.shujinko.app.utils.TokenStore
 
 class AuthViewModel(private val authService: AuthService) {
 
-    suspend fun login(context: Context, idToken: String): Boolean {
+    suspend fun login(context: Context, idToken: String, birthday: String? = null): Boolean {
         return try {
-            val response = authService.loginWithFirebaseToken(mapOf("idToken" to idToken))
+            val response = authService.loginWithFirebaseToken(
+                mapOf(
+                    "idToken" to idToken,
+                    "birthday" to (birthday ?: "")
+                )
+            )
             val body = response.body()
 
             if (response.isSuccessful && body != null) {

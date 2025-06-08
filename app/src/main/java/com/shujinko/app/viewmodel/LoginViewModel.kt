@@ -59,10 +59,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
-    fun sendTokenToServer(idToken: String, onComplete: (Boolean) -> Unit) {
+    // ✅ 생일도 함께 보내도록 수정
+    fun sendTokenToServer(idToken: String, birthday: String?, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             val context = getApplication<Application>().applicationContext
-            val result = authRepository.login(context, idToken)
+            val result = authRepository.login(context, idToken, birthday)
             onComplete(result)
         }
     }
@@ -117,9 +118,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 val response = connection.inputStream.bufferedReader().readText()
                 Log.d("Birthday", "받은 생일 응답: $response")
 
-                // ✅ 콜백은 Main Thread에서 실행
+                val parsedBirthday = parseBirthday(response)
+
                 withContext(Dispatchers.Main) {
-                    onResult(response)
+                    onResult(parsedBirthday)
                 }
             } catch (e: Exception) {
                 Log.e("Birthday", "생일 정보 가져오기 실패", e)
@@ -130,5 +132,27 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun parseBirthday(json: String?): String? {
+        return try {
+            val obj = org.json.JSONObject(json ?: return null)
+            val birthdays = obj.getJSONArray("birthdays")
+            for (i in 0 until birthdays.length()) {
+                val birthdayObj = birthdays.getJSONObject(i)
+                val dateObj = birthdayObj.getJSONObject("date")
+                val year = dateObj.optInt("year", -1)
+                val month = dateObj.getInt("month")
+                val day = dateObj.getInt("day")
 
+                return if (year != -1) {
+                    "%04d-%02d-%02d".format(year, month, day)
+                } else {
+                    null
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.e("Birthday", "파싱 실패", e)
+            null
+        }
+    }
 }
