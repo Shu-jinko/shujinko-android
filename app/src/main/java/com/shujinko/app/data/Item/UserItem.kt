@@ -1,0 +1,12 @@
+package com.shujinko.app.data.Item
+
+data class User(
+    val email: String,
+    val name: String,
+    val birthday: String
+)
+
+data class LoginRequest(
+    val idToken: String,
+    val birthday: String? = null
+)

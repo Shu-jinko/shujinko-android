@@ -3,6 +3,8 @@ package com.shujinko.app.data.remote
 import com.shujinko.app.data.Item.DiaryRequest
 import com.shujinko.app.data.Item.DiaryResponse
 import com.shujinko.app.data.Item.DiaryUpdate
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -23,18 +25,36 @@ interface DiaryService {
         @Query("month") month: Int
     ): Response<List<DiaryResponse>>
 
+    @GET("/diary/images/{fileName}")
+    @Streaming
+    suspend fun getDiaryImage(
+        @Header("Authorization") token: String,
+        @Path("fileName") fileName: String
+    ): Response<okhttp3.ResponseBody>
+
     @POST("diary")
     suspend fun createDiary(
         @Header("Authorization") token: String,
         @Body request: DiaryRequest
     ): Response<Void>
 
-    @PATCH("diary/{id}")
-    suspend fun updateDiary(
+    @Multipart
+    @POST("/diary/photoDiary")
+    suspend fun uploadPhotoDiary(
+        @Header("Authorization") token: String,
+        @Part createParam: MultipartBody.Part,
+        @Part images: List<MultipartBody.Part>
+    ): Response<Void>
+
+    @Multipart
+    @PATCH("/diary/photoDiary/{id}")
+    suspend fun updatePhotoDiary(
         @Header("Authorization") token: String,
         @Path("id") id: Long,
-        @Body request: DiaryUpdate
+        @Part updateParam: MultipartBody.Part,
+        @Part images: List<MultipartBody.Part>
     ): Response<Void>
+
 
     @DELETE("diary/{id}")
     suspend fun deleteDiary(@Header("Authorization") token: String, @Path("id") id: Long): Response<Void>
