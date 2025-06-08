@@ -49,7 +49,7 @@ object NetworkModule {
     object RepositoryModule {
         @Provides
         @Singleton
-        fun provideAuthRepository(authService: AuthService):    AuthRepository =
+        fun provideAuthRepository(authService: AuthService): AuthRepository =
             AuthRepository(authService)
     }
 

@@ -64,4 +64,40 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+
+    fun fetchUserInfo(onResult: (email: String?, name: String?, birthday: String?) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val context = getApplication<Application>().applicationContext
+
+            try {
+                val token = TokenStore.getAccessToken(context).firstOrNull()
+
+                if (token.isNullOrBlank()) {
+                    Log.e("UserViewModel", "❌ 토큰이 없습니다.")
+                    withContext(Dispatchers.Main) { onResult(null, null, null) }
+                    return@launch
+                }
+
+                val response = userService.getUserInfo("Bearer $token")
+
+                if (response.isSuccessful) {
+                    val user = response.body()
+                    Log.d("UserViewModel", "✅ 사용자 정보: $user")
+                    withContext(Dispatchers.Main) {
+                        onResult(user?.email, user?.name, user?.birthday)
+                    }
+                } else {
+                    Log.e("UserViewModel", "❌ 사용자 정보 불러오기 실패: ${response.code()}")
+                    withContext(Dispatchers.Main) {
+                        onResult(null, null, null)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "❌ 사용자 정보 불러오기 예외", e)
+                withContext(Dispatchers.Main) {
+                    onResult(null, null, null)
+                }
+            }
+        }
+    }
 }
