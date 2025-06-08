@@ -6,15 +6,21 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.shujinko.app.data.remote.RetrofitClient
+import com.shujinko.app.data.remote.UserService
 import com.shujinko.app.utils.TokenStore
 import com.shujinko.app.util.provideGoogleSignInOptions
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class UserViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    application: Application,
+    private val userService: UserService
+) : AndroidViewModel(application) {
 
     fun deleteUser(onComplete: (Boolean) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -29,7 +35,7 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                val response = RetrofitClient.userService.deleteUser("Bearer $token")
+                val response = userService.deleteUser("Bearer $token")
 
                 // regardless of response, clear tokens and Firebase sign-out
                 TokenStore.clearAll(context)
@@ -48,7 +54,6 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 Log.e("UserViewModel", "❌ 로그아웃 예외 발생", e)
 
-                // 예외 시에도 로컬 로그아웃은 수행
                 TokenStore.clearAll(context)
                 FirebaseAuth.getInstance().signOut()
                 GoogleSignIn.getClient(context, provideGoogleSignInOptions(context)).signOut()
