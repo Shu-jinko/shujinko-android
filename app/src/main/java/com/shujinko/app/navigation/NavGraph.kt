@@ -39,7 +39,8 @@ fun ShujinkoNavGraph(
             val diaryViewModel: DiaryViewModel = hiltViewModel()
             MainScreen(
                 diaryViewModel = diaryViewModel,
-                token = token
+                token = token,
+                parentNavController = navController 
             )
         }
     }

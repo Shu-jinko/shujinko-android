@@ -6,28 +6,40 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.shujinko.app.navigation.Screen
 import java.time.LocalDate
+import com.shujinko.app.viewmodel.LoginViewModel
+import com.shujinko.app.viewmodel.UserViewModel
 
 @Composable
-fun ProfileScreen(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize()) {
+fun ProfileScreen(
+    navController: NavController,
+    parentNavController: NavController,
+    userViewModel: UserViewModel
+) {
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Button(
             onClick = {
-                val today = LocalDate.now()
-                val route = Screen.DeleteDiary.route
-                    .replace("{year}", today.year.toString())
-                    .replace("{month}", today.monthValue.toString())
-                    .replace("{day}", today.dayOfMonth.toString())
-
-                navController.navigate(route)
+                userViewModel.deleteUser { success ->
+                    if (success) {
+                        parentNavController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Main.route) { inclusive = true }
+                        }
+                    }
+                }
             },
             modifier = Modifier.padding(16.dp)
         ) {
-            Text("오늘 일기 삭제하기")
+            Text("로그아웃")
         }
     }
 }

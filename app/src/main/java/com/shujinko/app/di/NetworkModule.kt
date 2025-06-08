@@ -3,6 +3,7 @@ package com.shujinko.app.di
 import com.shujinko.app.data.remote.DiaryService
 import com.shujinko.app.data.remote.StatisticsService
 import com.shujinko.app.data.remote.SuggestionService
+import com.shujinko.app.data.remote.UserService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,4 +56,9 @@ object NetworkModule {
     @Singleton
     fun provideSuggestionService(retrofit: Retrofit): SuggestionService =
         retrofit.create(SuggestionService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUserService(retrofit: Retrofit): UserService =
+        retrofit.create(UserService::class.java)
 }

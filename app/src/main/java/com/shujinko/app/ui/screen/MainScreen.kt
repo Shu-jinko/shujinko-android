@@ -18,14 +18,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.shujinko.app.navigation.DiaryNavHost
 import com.shujinko.app.navigation.HomeNavHost
+import com.shujinko.app.viewmodel.UserViewModel
 import java.time.LocalDate
 
 @Composable
 fun MainScreen(
     diaryViewModel: DiaryViewModel,
-    token: String
+    token: String,
+    parentNavController: NavController
 ) {
     val bottomNavController = rememberNavController()
 
@@ -59,10 +62,15 @@ fun MainScreen(
                 )
             }
             composable("profile") {
+                val userViewModel: UserViewModel = hiltViewModel()
+
                 ProfileScreen(
-                    navController = bottomNavController
+                    navController = bottomNavController,
+                    parentNavController = parentNavController,
+                    userViewModel = userViewModel
                 )
             }
+
             composable(
                 route = "delete_diary/{year}/{month}/{day}",
                 arguments = listOf(

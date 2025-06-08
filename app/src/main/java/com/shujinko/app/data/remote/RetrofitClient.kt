@@ -22,4 +22,7 @@ object RetrofitClient {
         .build()
 
     val authService: AuthService = retrofit.create(AuthService::class.java)
+
+    // ✅ 추가된 부분
+    val userService: UserService = retrofit.create(UserService::class.java)
 }
