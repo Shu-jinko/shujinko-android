@@ -5,3 +5,8 @@ data class User(
     val name: String,
     val birthday: String
 )
+
+data class UpdateUserRequest(
+    val name: String,
+    val birthday: String
+)
