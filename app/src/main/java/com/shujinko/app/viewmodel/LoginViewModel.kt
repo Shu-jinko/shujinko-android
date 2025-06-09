@@ -41,7 +41,8 @@ class LoginViewModel @Inject constructor(
         _account.value = account
     }
 
-    fun firebaseAuthWithGoogle(account: GoogleSignInAccount, onResult: (Boolean, String?) -> Unit) {
+    // ✅ 콜백 시그니처 변경: authCode도 같이 넘기기
+    fun firebaseAuthWithGoogle(account: GoogleSignInAccount, onResult: (Boolean, String?, String?) -> Unit) {
         _isLoading.value = true
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
 
@@ -49,23 +50,27 @@ class LoginViewModel @Inject constructor(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val idToken = account.idToken
-                    Log.d("Login", "Firebase 인증 성공, idToken: $idToken")
+                    val authCode = account.serverAuthCode  // ✅ Calendar API용
+                    Log.d("Login", "Firebase 인증 성공, idToken: $idToken, authCode: $authCode")
                     _isLoading.value = false
-                    onResult(true, idToken)
+                    onResult(true, idToken, authCode) // ✅ authCode 전달
                 } else {
                     Log.e("Login", "Firebase 인증 실패", task.exception)
                     _isLoading.value = false
-                    onResult(false, null)
+                    onResult(false, null, null) // ✅ 실패 시 null
                 }
             }
     }
 
-    fun sendTokenToServer(idToken: String, birthday: String?, onComplete: (Boolean) -> Unit) {
+
+    // ✅ authCode 인자로 추가
+    fun sendTokenToServer(idToken: String, authCode: String?, birthday: String?, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = authRepository.login(context, idToken, birthday)
+            val result = authRepository.login(context, idToken, authCode, birthday) // ✅ 수정됨
             onComplete(result)
         }
     }
+
 
     fun tryAutoLogin(onSuccess: () -> Unit, onFail: () -> Unit) {
         viewModelScope.launch {

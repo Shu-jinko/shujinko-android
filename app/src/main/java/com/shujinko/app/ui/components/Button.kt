@@ -14,7 +14,7 @@ import com.shujinko.app.ui.theme.TextPrimary
 import com.shujinko.app.ui.theme.Pretendard
 
 @Composable
-fun ShujinkoButton(
+fun S_Button(
     text: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -35,4 +35,3 @@ fun ShujinkoButton(
         )
     }
 }
-    

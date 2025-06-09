@@ -34,16 +34,14 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
             val account = task.getResult(ApiException::class.java)
             viewModel.setAccount(account)
 
-            viewModel.firebaseAuthWithGoogle(account) { success, idToken ->
-                if (success && idToken != null) {
+            viewModel.firebaseAuthWithGoogle(account) { success, idToken, authCode ->  // ✅ authCode 추가
+                if (success && idToken != null && authCode != null) {                  // ✅ authCode null 체크
                     Log.d("Login", "idToken = $idToken")
 
-                    // ✅ 생일 먼저 받아오기
                     viewModel.fetchBirthday(account) { parsedBirthday ->
                         Log.d("Birthday", "🎂 생일 데이터: $parsedBirthday")
 
-                        // ✅ 생일과 함께 서버 로그인 요청
-                        viewModel.sendTokenToServer(idToken, parsedBirthday) { serverResult ->
+                        viewModel.sendTokenToServer(idToken, authCode, parsedBirthday) { serverResult ->
                             if (serverResult) {
                                 onLoginSuccess()
                             } else {
@@ -52,9 +50,10 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
                         }
                     }
                 } else {
-                    Log.e("Login", "Firebase 인증 실패 또는 idToken 없음")
+                    Log.e("Login", "Firebase 인증 실패 또는 토큰 누락")
                 }
             }
+
         } catch (e: ApiException) {
             Log.w("Login", "signInResult:failed code=${e.statusCode}")
         }

@@ -131,6 +131,8 @@ dependencies {
     // calendar
     implementation("com.kizitonwose.calendar:compose:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.6.0")
+    implementation("com.google.api-client:google-api-client-android:1.34.0")
+
 
     // 이미지 로딩용 Coil Compose
     implementation("io.coil-kt:coil-compose:2.4.0")
