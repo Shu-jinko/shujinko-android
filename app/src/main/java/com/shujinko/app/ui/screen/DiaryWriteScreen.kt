@@ -8,13 +8,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.shujinko.app.viewmodel.DiaryViewModel
 import com.shujinko.app.viewmodel.SuggestionViewModel
 import kotlinx.coroutines.FlowPreview
@@ -31,12 +32,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
-import java.time.LocalDate
-import androidx.compose.foundation.lazy.items
-import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
-
+import java.time.LocalDate
+import com.shujinko.app.ui.theme.PrimaryPurple
+import com.shujinko.app.ui.theme.Pretendard
 
 @OptIn(FlowPreview::class)
 @Composable
@@ -151,6 +150,8 @@ fun DiaryWriteScreen(
             Text(
                 text = if (isEditMode) "일기를 수정하세요" else "일기를 입력하세요",
                 fontSize = 20.sp,
+                fontFamily = Pretendard,
+                color = PrimaryPurple,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             if (suggestionLoading) {
@@ -181,7 +182,13 @@ fun DiaryWriteScreen(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier.fillMaxWidth().height(300.dp),
-                placeholder = { Text("오늘 하루를 자유롭게 적어보세요!") }
+                placeholder = {
+                    Text(
+                        "오늘 하루를 자유롭게 적어보세요!",
+                        fontFamily = Pretendard,
+                        fontSize = 14.sp
+                    )
+                }
             )
         }
 
@@ -189,8 +196,11 @@ fun DiaryWriteScreen(
             Modifier.fillMaxWidth().padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Button(onClick = { imagePickerLauncher.launch("image/*") }) {
-                Text("사진 추가")
+            Button(
+                onClick = { imagePickerLauncher.launch("image/*") },
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+            ) {
+                Text("사진 추가", color = Color.White, fontFamily = Pretendard)
             }
             if (imageUris.isNotEmpty()) {
                 Text("${imageUris.size}장 선택됨", Modifier.align(Alignment.CenterVertically))
@@ -222,7 +232,6 @@ fun DiaryWriteScreen(
                 coroutineScope.launch {
                     val todayStr = LocalDate.now().toString()
 
-                    // 새로 선택한 이미지 (갤러리에서 고른 content:// 등)
                     val newImageFiles = imageUris.filter { !it.toString().startsWith("http") }.mapNotNull { uri ->
                         try {
                             val inputStream = context.contentResolver.openInputStream(uri)
@@ -235,7 +244,6 @@ fun DiaryWriteScreen(
                         }
                     }
 
-                    // 기존 서버 이미지 처리
                     val serverFileNames = imageUris
                         .filter { it.toString().startsWith("http") }
                         .mapNotNull { uri -> uri.toString().substringAfterLast("/").ifBlank { null } }
@@ -270,14 +278,19 @@ fun DiaryWriteScreen(
                 }
             },
             enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                Text(if (isEditMode) "수정 완료" else "작성 완료")
+                Text(
+                    text = if (isEditMode) "수정 완료" else "작성 완료",
+                    fontFamily = Pretendard,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
             }
         }
-
     }
 }

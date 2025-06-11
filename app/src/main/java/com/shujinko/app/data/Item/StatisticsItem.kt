@@ -1,4 +1,4 @@
-package com.shujinko.app.data.Item
+    package com.shujinko.app.data.Item
 
 data class KeywordStat(
     val keyword: String,

@@ -47,4 +47,24 @@ interface StatisticsService {
         @Query("month") month: Int,
         @Query("week") day: Int
     ): Response<OneSentenceKeyword>
+
+    @GET("/statistics/day7Keywords")
+    suspend fun getDay7Keywords(
+        @Header("Authorization") token: String,
+    ): Response<List<KeywordStat>>
+
+    @GET("/statistics/day7Emotions")
+    suspend fun getDay7Emotions(
+        @Header("Authorization") token: String,
+    ): Response<List<EmotionStat>>
+
+    @GET("/statistics/day30Keywords")
+    suspend fun getDay30Keywords(
+        @Header("Authorization") token: String,
+    ): Response<List<KeywordStat>>
+
+    @GET("/statistics/day30Emotions")
+    suspend fun getDay30Emotions(
+        @Header("Authorization") token: String,
+    ): Response<List<EmotionStat>>
 }

@@ -1,14 +1,8 @@
 package com.shujinko.app.ui.screen
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,8 +12,9 @@ import androidx.navigation.NavController
 import com.shujinko.app.navigation.Screen
 import com.shujinko.app.viewmodel.UserViewModel
 import android.widget.Toast
-import androidx.compose.material3.OutlinedTextField
-
+import androidx.compose.ui.graphics.Color
+import com.shujinko.app.ui.theme.PrimaryPurple
+import com.shujinko.app.ui.theme.Pretendard
 
 @Composable
 fun ProfileScreen(
@@ -27,7 +22,6 @@ fun ProfileScreen(
     parentNavController: NavController,
     userViewModel: UserViewModel
 ) {
-
     val context = LocalContext.current
     var email by remember { mutableStateOf<String?>(null) }
     var name by remember { mutableStateOf("") }
@@ -46,11 +40,23 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("이메일: ${email ?: "불러오는 중..."}", fontSize = 16.sp)
+        Text(
+            text = "내 정보",
+            fontSize = 22.sp,
+            fontFamily = Pretendard,
+            color = PrimaryPurple
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "이메일: ${email ?: "불러오는 중..."}",
+            fontSize = 16.sp,
+            fontFamily = Pretendard
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -80,18 +86,25 @@ fun ProfileScreen(
                     if (success) {
                         Toast.makeText(context, "✅ 수정 완료!", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context  , "❌ 수정 실패!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "❌ 수정 실패!", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
-            enabled = !isSaving
+            enabled = !isSaving,
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+            modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text(if (isSaving) "저장 중..." else "정보 수정")
+            Text(
+                text = if (isSaving) "저장 중..." else "정보 수정",
+                fontFamily = Pretendard,
+                fontSize = 16.sp,
+                color = Color.White
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
+        OutlinedButton(
             onClick = {
                 userViewModel.deleteUser { success ->
                     if (success) {
@@ -100,11 +113,11 @@ fun ProfileScreen(
                         }
                     }
                 }
-            }
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryPurple)
         ) {
-            Text("로그아웃")
+            Text("로그아웃", fontFamily = Pretendard, fontSize = 16.sp)
         }
     }
 }
-
-
