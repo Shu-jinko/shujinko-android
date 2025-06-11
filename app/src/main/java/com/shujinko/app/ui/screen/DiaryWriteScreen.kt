@@ -62,6 +62,8 @@ fun DiaryWriteScreen(
     val suggestionLoading by suggestionViewModel.isLoading.collectAsState()
     val suggestionError by suggestionViewModel.errorMessage.collectAsState()
 
+    val todayStr = LocalDate.now().toString()
+
     val context = LocalContext.current
 
     val imageUris = remember { mutableStateListOf<Uri>() }
@@ -109,7 +111,7 @@ fun DiaryWriteScreen(
     }
 
     LaunchedEffect(Unit) {
-        suggestionViewModel.fetchSuggestion(token, "")
+        suggestionViewModel.fetchSuggestion(token, "", todayStr)
         lastSuggestedText = ""
     }
 
@@ -125,7 +127,7 @@ fun DiaryWriteScreen(
             typingDelayProgress = elapsed / 3000f
         }
         if (text != lastSuggestedText) {
-            suggestionViewModel.fetchSuggestion(token, text)
+            suggestionViewModel.fetchSuggestion(token, text, todayStr)
             lastSuggestedText = text
         }
         typingDelayProgress = 0f
@@ -168,7 +170,7 @@ fun DiaryWriteScreen(
                         Text("✍️ AI 제안: $it", Modifier.align(Alignment.CenterStart).padding(16.dp), fontSize = 14.sp)
                         IconButton(
                             onClick = {
-                                suggestionViewModel.fetchSuggestion(token, text)
+                                suggestionViewModel.fetchSuggestion(token, text, todayStr)
                                 lastSuggestedText = text
                             },
                             modifier = Modifier.align(Alignment.TopEnd)
