@@ -28,6 +28,9 @@ fun SplashScreen(
         loginViewModel.tryAutoLogin(
             onSuccess = {
                 Log.d("Splash", "자동 로그인 성공 → 메인 이동")
+
+                loginViewModel.syncGoogleCalendar()
+
                 navController.navigate("main") {
                     popUpTo("splash") { inclusive = true }
                 }

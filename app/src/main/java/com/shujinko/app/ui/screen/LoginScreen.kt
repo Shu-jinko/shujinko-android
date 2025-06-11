@@ -43,7 +43,10 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
                 if (success && idToken != null && authCode != null) {
                     viewModel.fetchBirthday(account) { parsedBirthday ->
                         viewModel.sendTokenToServer(idToken, authCode, parsedBirthday) { serverResult ->
-                            if (serverResult) onLoginSuccess()
+                            if (serverResult) {
+                                viewModel.syncGoogleCalendar()
+                                onLoginSuccess()
+                            }
                             else Log.e("Login", "서버 로그인 실패")
                         }
                     }

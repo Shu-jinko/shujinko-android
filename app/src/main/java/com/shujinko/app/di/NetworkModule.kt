@@ -1,6 +1,7 @@
 package com.shujinko.app.di
 
 import com.shujinko.app.data.remote.AuthService
+import com.shujinko.app.data.remote.CalendarService
 import com.shujinko.app.data.remote.DiaryService
 import com.shujinko.app.data.remote.StatisticsService
 import com.shujinko.app.data.remote.SuggestionService
@@ -77,4 +78,9 @@ object NetworkModule {
     @Singleton
     fun provideUserService(retrofit: Retrofit): UserService =
         retrofit.create(UserService::class.java)
+
+    @Provides
+    @Singleton
+    fun CalendarService(retrofit: Retrofit): CalendarService =
+        retrofit.create(CalendarService::class.java)
 }

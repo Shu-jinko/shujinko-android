@@ -8,10 +8,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.shujinko.app.data.remote.CalendarService
 import com.shujinko.app.data.repository.AuthRepository
+import com.shujinko.app.utils.TokenStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -21,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val calendarService: CalendarService
 ) : ViewModel() {
 
     private val _account = MutableLiveData<GoogleSignInAccount?>()
@@ -142,4 +146,26 @@ class LoginViewModel @Inject constructor(
             null
         }
     }
+
+    fun syncGoogleCalendar() {
+        viewModelScope.launch {
+            try {
+                val token = TokenStore.getAccessToken(context).firstOrNull()
+                if (!token.isNullOrBlank()) {
+                    val bearer = "Bearer $token"
+                    val response = calendarService.loadCalendar(bearer)
+                    if (response.isSuccessful) {
+                        Log.d("Calendar", "✅ 구글 캘린더 연동 성공")
+                    } else {
+                        Log.e("Calendar", "❌ 캘린더 연동 실패: ${response.code()}")
+                    }
+                } else {
+                    Log.e("Calendar", "❌ 토큰 없음")
+                }
+            } catch (e: Exception) {
+                Log.e("Calendar", "❌ 캘린더 연동 예외 발생", e)
+            }
+        }
+    }
+
 }
