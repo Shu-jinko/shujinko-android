@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.shujinko.app.ui.components.HomeActionCard
 import com.shujinko.app.ui.components.S_Card
+import com.shujinko.app.ui.components.TopTitle
 import com.shujinko.app.viewmodel.StatisticsViewModel
 import java.time.LocalDate
 import java.time.temporal.WeekFields
@@ -60,25 +61,9 @@ fun HomeScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Shujinko",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-            )
-        }
-    ) { innerPadding ->
+    TopTitle(title = "DAYKEEPER") {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(20.dp),
         ) {
-            // 인사 + 요약 문장
             Text(
                 text = "오늘 하루도 수고했어요 ☕",
                 style = MaterialTheme.typography.titleMedium

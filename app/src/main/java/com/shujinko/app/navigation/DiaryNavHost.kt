@@ -116,6 +116,10 @@ fun DiaryNavHost(
             )
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
+            val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
+            val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
+            val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
+            val diaryDate = LocalDate.of(year, month, day)
             val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
             val suggestionViewModel: SuggestionViewModel = hiltViewModel()
 
@@ -127,8 +131,10 @@ fun DiaryNavHost(
                 isEditMode = true,
                 initialText = URLDecoder.decode(rawDiary, "UTF-8"),
                 diaryId = id,
+                diaryDate = diaryDate, // ✅ 여기 추가됨
                 parentNavController = parentNavController
             )
         }
+
     }
 }

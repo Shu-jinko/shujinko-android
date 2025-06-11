@@ -66,7 +66,7 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun fetchUserInfo(onResult: (email: String?, name: String?, birthday: String?) -> Unit) {
+    fun fetchUserInfo(onResult: (email: String?, name: String?, birthday: String?, photoUrl: String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
 
@@ -75,7 +75,7 @@ class UserViewModel @Inject constructor(
 
                 if (token.isNullOrBlank()) {
                     Log.e("UserViewModel", "❌ 토큰이 없습니다.")
-                    withContext(Dispatchers.Main) { onResult(null, null, null) }
+                    withContext(Dispatchers.Main) { onResult(null, null, null, null) }
                     return@launch
                 }
 
@@ -85,18 +85,18 @@ class UserViewModel @Inject constructor(
                     val user = response.body()
                     Log.d("UserViewModel", "✅ 사용자 정보: $user")
                     withContext(Dispatchers.Main) {
-                        onResult(user?.email, user?.name, user?.birthday)
+                        onResult(user?.email, user?.name, user?.birthday, user?.photoUrl)
                     }
                 } else {
                     Log.e("UserViewModel", "❌ 사용자 정보 불러오기 실패: ${response.code()}")
                     withContext(Dispatchers.Main) {
-                        onResult(null, null, null)
+                        onResult(null, null, null, null)
                     }
                 }
             } catch (e: Exception) {
                 Log.e("UserViewModel", "❌ 사용자 정보 불러오기 예외", e)
                 withContext(Dispatchers.Main) {
-                    onResult(null, null, null)
+                    onResult(null, null, null, null)
                 }
             }
         }

@@ -47,12 +47,14 @@ fun DiaryWriteScreen(
     token: String,
     isEditMode: Boolean = false,
     diaryId: Long? = null,
-    initialText: String = ""
+    initialText: String = "" ,
+    diaryDate: LocalDate = LocalDate.now()
 ) {
     var text by remember { mutableStateOf(initialText) }
     var hasNavigated by remember { mutableStateOf(false) }
     var lastSuggestedText by remember { mutableStateOf("") }
     var typingDelayProgress by remember { mutableFloatStateOf(0f) }
+    var selectedDiaryDate by remember { mutableStateOf(diaryDate) }
 
     val isLoading by diaryViewModel.isLoading.collectAsState()
     val errorMessage by diaryViewModel.errorMessage.collectAsState()
@@ -77,7 +79,7 @@ fun DiaryWriteScreen(
 
     LaunchedEffect(isEditMode, diaryId) {
         if (isEditMode && diaryId != null) {
-            diaryViewModel.getDiary(token, LocalDate.now().year, LocalDate.now().monthValue, LocalDate.now().dayOfMonth) { success, diary ->
+            diaryViewModel.getDiary(token, diaryDate.year, diaryDate.monthValue, diaryDate.dayOfMonth) { success, diary ->
                 diary?.paragraph?.forEach { para ->
                     if (!para.matched_image.isNullOrBlank()) {
                         val imageUrl = "http://43.201.212.34:8080/diary/images/" + para.matched_image.substringAfterLast("/")
@@ -102,7 +104,9 @@ fun DiaryWriteScreen(
     LaunchedEffect(Unit) {
         snapshotFlow { writeCompleted }.collect {
             if (it) {
-                navController.navigate("diary_result") {
+                navController.navigate(
+                    "diary_result?year=${selectedDiaryDate.year}&month=${selectedDiaryDate.monthValue}&day=${selectedDiaryDate.dayOfMonth}"
+                ) {
                     launchSingleTop = true
                 }
                 diaryViewModel.resetWriteCompleted()
@@ -135,12 +139,12 @@ fun DiaryWriteScreen(
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "일기 작성에 문제가 발생했습니다. 관리자에 문의해주세요", Toast.LENGTH_SHORT).show()
         }
     }
     LaunchedEffect(suggestionError) {
         suggestionError?.let {
-            Toast.makeText(context, "AI 제안 오류: $it", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "일기 어시스턴스 제안이 불가합니다. 관리자에 문의해주세요", Toast.LENGTH_SHORT).show()
         }
     }
 
