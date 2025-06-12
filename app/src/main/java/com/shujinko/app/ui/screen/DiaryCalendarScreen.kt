@@ -1,5 +1,7 @@
 package com.shujinko.app.ui.screen
 
+import android.text.format.DateUtils.isToday
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -20,14 +22,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.shujinko.app.data.Item.DiaryResponse
+import com.shujinko.app.ui.components.TopTitle
 import java.time.*
 import java.time.format.TextStyle
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiaryCalendarScreen(
     onClickMore: (LocalDate) -> Unit,
+    onWritePastDiary: (LocalDate) -> Unit,
     diaryMap: Map<LocalDate, DiaryResponse>,
     onMonthChange: (Int, Int) -> Unit
 ) {
@@ -36,7 +39,7 @@ fun DiaryCalendarScreen(
     var lastLoadedMonth by remember { mutableStateOf(Pair(0, 0)) }
 
     val normalizedDiaryMap = remember(diaryMap) {
-        diaryMap.mapKeys { it.key } // 필요하면 .toLocalDate()
+        diaryMap.mapKeys { it.key }
     }
 
     LaunchedEffect(selectedDate) {
@@ -48,133 +51,205 @@ fun DiaryCalendarScreen(
         }
     }
 
-    Scaffold { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp) // 좌우 여백
-        ) {
-            /** 상단 제목 + 토글 (스크롤 안 됨) **/
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("CALENDAR", style = MaterialTheme.typography.headlineSmall)
-                    SegmentedToggle(
-                        isWeekView = isWeekView,
-                        onToggle = { isWeekView = it }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
+    TopTitle(
+        title = "CALENDAR",
+        content = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                SegmentedToggle(
+                    isWeekView = isWeekView,
+                    onToggle = { isWeekView = it }
+                )
             }
 
-            /** 달력 뷰 **/
-            item {
-                if (isWeekView) {
-                    Text(
-                        text = "${selectedDate.month.getDisplayName(TextStyle.FULL, Locale.KOREAN)} ${selectedDate.year}",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    HorizontalWeekCalendar(
-                        selectedDate = selectedDate,
-                        diaryMap = normalizedDiaryMap,
-                        onDateSelected = { selectedDate = it }
-                    )
-                } else {
-                    HorizontalMonthCalendar(
-                        selectedDate = selectedDate,
-                        diaryMap = normalizedDiaryMap,
-                        onDateSelected = { selectedDate = it }
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            /** 요약 카드 **/
-            item {
-                DiarySummaryCard(
-                    selectedDate = selectedDate,
-                    diary = normalizedDiaryMap[selectedDate],
-                    onClickMore = onClickMore
+                Text(
+                    text = "    ${selectedDate.year}년 ${selectedDate.monthValue}월",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(32.dp)) // 마지막 바닥 여백
+
+            // 캘린더
+            if (isWeekView) {
+                HorizontalWeekCalendar(
+                    selectedDate = selectedDate,
+                    diaryMap = normalizedDiaryMap,
+                    onDateSelected = { selectedDate = it }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+            } else {
+                HorizontalMonthCalendar(
+                    selectedDate = selectedDate,
+                    diaryMap = normalizedDiaryMap,
+                    onDateSelected = { selectedDate = it }
+                )
+            }
+
+            DiarySummaryCard(
+                selectedDate = selectedDate,
+                diary = normalizedDiaryMap[selectedDate],
+                onClickMore = onClickMore,
+                onWritePastDiary = onWritePastDiary
+            )
+        }
+    )
+}
+
+
+@Composable
+fun SegmentedToggle(
+    isWeekView: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    val toggleOptions = listOf("주간", "월간")
+
+    Surface(
+        modifier = Modifier
+            .height(36.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        tonalElevation = 1.dp,
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            toggleOptions.forEachIndexed { index, label ->
+                val selected = (isWeekView && index == 0) || (!isWeekView && index == 1)
+
+                val backgroundColor =
+                    if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                val textColor =
+                    if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable { onToggle(index == 0) }
+                        .background(backgroundColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = textColor
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-fun SegmentedToggle(isWeekView: Boolean, onToggle: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.medium
-            )
-            .padding(4.dp)
-    ) {
-        listOf("주간", "월간").forEachIndexed { index, label ->
-            val selected = (isWeekView && index == 0) || (!isWeekView && index == 1)
-            Text(
-                text = label,
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .background(
-                        if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                    )
-                    .clickable { onToggle(index == 0) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
+
 
 @Composable
 fun DiarySummaryCard(
     selectedDate: LocalDate,
     diary: DiaryResponse?,
-    onClickMore: (LocalDate) -> Unit
+    onClickMore: (LocalDate) -> Unit,
+    onWritePastDiary: (LocalDate) -> Unit
 ) {
+    val dayOfWeek = selectedDate.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREAN)
+    val dateLabel = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 ($dayOfWeek)"
+    val isPastOrToday = !selectedDate.isAfter(LocalDate.now())
+    val isToday = selectedDate == LocalDate.now()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = "📅 ${selectedDate}의 요약",
-                style = MaterialTheme.typography.titleMedium
+                text = "${dateLabel}의 요약",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (diary != null) {
-                Text("요약: ${diary.summary}", style = MaterialTheme.typography.bodyMedium)
-                Text("감정: ${diary.label}", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                Text("이 날짜에는 기록이 없습니다.", color = Color.Gray)
-            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedButton(
-                onClick = { onClickMore(selectedDate) },
-                modifier = Modifier.align(Alignment.End)
+            when {
+                diary != null -> {
+                    if (!diary.summary.isNullOrEmpty()) {
+                        Text(
+                            text = diary.summary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "감정: ",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "😊 ${diary.label}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                isPastOrToday  -> {
+                    Text(
+                        text = if (isToday)
+                            "오늘은 일기가 아직 없네요. 지금 작성해볼까요?"
+                        else
+                            "이 날은 일기가 없네요. 지금 작성해볼까요?",
+                        color = MaterialTheme.colorScheme.outline,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                else -> {
+                    Text(
+                        text = "곧 있을 하루를 보내고 일기를 남겨보세요.",
+                        color = MaterialTheme.colorScheme.outline,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                Text("더보기")
+                when {
+                    diary != null -> {
+                        OutlinedButton(onClick = { onClickMore(selectedDate) }) {
+                            Text("더보기")
+                        }
+                    }
+
+                    isPastOrToday  -> {
+                        OutlinedButton(onClick = { onWritePastDiary(selectedDate) }) {
+                            Text(if (isToday) "오늘 일기 작성하기" else "지난 일기 작성하기")
+                        }
+                    }
+
+                    else -> {
+                        // 오늘 또는 미래 → 버튼 없음
+                    }
+                }
             }
         }
     }
 }
+
 
 
 @Composable
@@ -193,7 +268,16 @@ fun HorizontalWeekCalendar(
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialWeekIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
-    val screenWidth = (LocalConfiguration.current.screenWidthDp.dp - 32.dp)
+    val screenWidth = (LocalConfiguration.current.screenWidthDp.dp - 45.dp)
+
+    // ✅ 스크롤 위치 기반 selectedDate 업데이트
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        val weekStart = currentWeekStart.plusWeeks((listState.firstVisibleItemIndex - initialWeekIndex).toLong())
+        val middleDate = weekStart.plusDays(3) // 수요일
+        if (middleDate != selectedDate) {
+            onDateSelected(middleDate)
+        }
+    }
 
     LazyRow(
         state = listState,
@@ -218,6 +302,7 @@ fun HorizontalWeekCalendar(
     }
 }
 
+
 @Composable
 fun WeekContent(
     weekDates: List<LocalDate>,
@@ -226,13 +311,11 @@ fun WeekContent(
     diaryMap: Map<LocalDate, DiaryResponse>,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     Row(
         modifier = Modifier
             .width(screenWidth)
-            .padding(horizontal = 0.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         weekDates.forEach { date ->
@@ -244,15 +327,18 @@ fun WeekContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .weight(1f)
-                    .height(80.dp),
-                verticalArrangement = Arrangement.Center
+                    .padding(vertical = 4.dp)
             ) {
+                // 요일 텍스트
                 Text(
                     text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREAN),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // 날짜 셀
                 DateCell(
                     date = date,
                     isSelected = isSelected,
@@ -266,6 +352,7 @@ fun WeekContent(
 }
 
 
+
 @Composable
 fun HorizontalMonthCalendar(
     selectedDate: LocalDate,
@@ -276,9 +363,18 @@ fun HorizontalMonthCalendar(
     val initialIndex = 1000
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
-    val screenWidth = (LocalConfiguration.current.screenWidthDp.dp - 32.dp)
+    val screenWidth = (LocalConfiguration.current.screenWidthDp.dp - 45.dp)
 
-    // 오늘 기준으로 현재 월 중앙 정렬
+    // ✅ 스크롤 위치 기반으로 selectedDate 자동 갱신
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        val centerMonth = YearMonth.now().plusMonths((listState.firstVisibleItemIndex - initialIndex).toLong())
+        val middleOfMonth = centerMonth.atDay(15) // 15일 기준으로 선택
+        if (middleOfMonth != selectedDate) {
+            onDateSelected(middleOfMonth)
+        }
+    }
+
+    // 🎯 초기 월로 스크롤 정렬
     LaunchedEffect(Unit) {
         listState.scrollToItem(initialIndex)
     }
@@ -304,6 +400,7 @@ fun HorizontalMonthCalendar(
     }
 }
 
+
 @Composable
 fun MonthContent(
     yearMonth: YearMonth,
@@ -312,8 +409,7 @@ fun MonthContent(
     diaryMap: Map<LocalDate, DiaryResponse>,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val firstDay = yearMonth.atDay(1)
     val lastDay = yearMonth.atEndOfMonth()
     val startDayOfWeek = DayOfWeek.SUNDAY
@@ -332,14 +428,9 @@ fun MonthContent(
     Column(
         modifier = Modifier
             .width(screenWidth)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "${yearMonth.year}년 ${yearMonth.monthValue}월",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
+        // 요일 헤더
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -347,14 +438,17 @@ fun MonthContent(
             listOf("일", "월", "화", "수", "목", "금", "토").forEach {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // 날짜 셀
         weeks.forEach { week ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -371,16 +465,26 @@ fun MonthContent(
                             val isSelected = date == selectedDate
                             val isToday = date == today
                             val hasDiary = diaryMap.containsKey(date)
-                            DateCell(date, isSelected, isToday, hasDiary) {
-                                onDateSelected(date)
-                            }
+
+                            DateCell(
+                                date = date,
+                                isSelected = isSelected,
+                                isToday = isToday,
+                                hasDiary = hasDiary,
+                                onClick = { onDateSelected(date) }
+                            )
+                        } else {
+                            // 빈 날짜 셀 처리 (안 깨지게 유지)
+                            Spacer(modifier = Modifier.size(12.dp))
                         }
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
+
 
 @Composable
 fun DateCell(
@@ -390,42 +494,55 @@ fun DateCell(
     hasDiary: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = when {
-        isSelected -> MaterialTheme.colorScheme.primaryContainer
-        isToday -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-        else -> Color.Transparent
-    }
-
-    val textColor = when {
-        isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .padding(2.dp)
-            .clip(CircleShape)
-            .background(backgroundColor)
-            .clickable { onClick() }
-            .padding(6.dp)
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = date.dayOfMonth.toString(),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = textColor
-            )
-        )
-        Box(
+        val backgroundColor = when {
+            isSelected -> MaterialTheme.colorScheme.primaryContainer
+            else -> Color.Transparent
+        }
+
+        val borderStroke = if (isToday && !isSelected)
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        else null
+
+        val textColor = if (isSelected)
+            MaterialTheme.colorScheme.onPrimaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface
+
+        Surface(
             modifier = Modifier
-                .size(6.dp)
-                .background(
-                    if (hasDiary) MaterialTheme.colorScheme.primary else Color.Transparent,
-                    CircleShape
+                .size(40.dp)
+                .clickable { onClick() },
+            shape = CircleShape,
+            color = backgroundColor,
+            border = borderStroke
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = textColor
+                    )
                 )
-        )
+            }
+        }
+
+        if (hasDiary) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .aspectRatio(1f)
+                    .background(
+                        MaterialTheme.colorScheme.primary,
+                        CircleShape
+                    )
+            )
+        } else {
+            Spacer(modifier = Modifier.height(10.dp)) // 빈 공간 대체
+        }
     }
 }

@@ -62,12 +62,45 @@ fun HomeNavHost(
                 onClickMore = { selectedDate ->
                     homeNavController.navigate("diary_result/${selectedDate.year}/${selectedDate.monthValue}/${selectedDate.dayOfMonth}")
                 },
+                onWritePastDiary = { selectedDate ->
+                    homeNavController.navigate(
+                        "diary_write/${selectedDate.year}/${selectedDate.monthValue}/${selectedDate.dayOfMonth}"
+                    )
+                },
                 diaryMap = diaryMap,
                 onMonthChange = { year, month ->
                     diaryViewModel.loadDiaryList(token, year, month)
                 }
             )
         }
+
+        composable(
+            "diary_write/{year}/{month}/{day}",
+            arguments = listOf(
+                navArgument("year") { type = NavType.IntType },
+                navArgument("month") { type = NavType.IntType },
+                navArgument("day") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val year = backStackEntry.arguments?.getInt("year") ?: return@composable
+            val month = backStackEntry.arguments?.getInt("month") ?: return@composable
+            val day = backStackEntry.arguments?.getInt("day") ?: return@composable
+            val diaryDate = LocalDate.of(year, month, day)
+            val suggestionViewModel: SuggestionViewModel = hiltViewModel()
+
+            DiaryWriteScreen(
+                navController = homeNavController,
+                diaryViewModel = diaryViewModel,
+                suggestionViewModel = suggestionViewModel,
+                token = token,
+                isEditMode = false,
+                initialText = "",
+                diaryId = null,
+                diaryDate = diaryDate, // ✅ 날짜 지정
+                parentNavController = parentNavController
+            )
+        }
+
 
         composable(
             "diary_edit/{id}/{year}/{month}/{day}/{rawDiary}",

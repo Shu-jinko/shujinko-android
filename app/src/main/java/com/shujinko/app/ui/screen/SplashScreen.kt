@@ -43,6 +43,6 @@ fun SplashScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        LoadingIndicator(message = "일기 작성 중...")
+        LoadingIndicator(message = "일기 쓰러 가는 길...")
     }
 }

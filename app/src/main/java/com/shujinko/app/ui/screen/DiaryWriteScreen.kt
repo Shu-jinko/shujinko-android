@@ -65,7 +65,7 @@ fun DiaryWriteScreen(
     val suggestionLoading by suggestionViewModel.isLoading.collectAsState()
     val suggestionError by suggestionViewModel.errorMessage.collectAsState()
 
-    val todayStr = LocalDate.now().toString()
+    val diaryDateStr = diaryDate.toString()
 
     val context = LocalContext.current
 
@@ -114,8 +114,8 @@ fun DiaryWriteScreen(
         snapshotFlow { writeCompleted }.collect {
             if (it) {
                 navController.navigate(
-                    "diary_result?year=${selectedDiaryDate.year}&month=${selectedDiaryDate.monthValue}&day=${selectedDiaryDate.dayOfMonth}"
-                ) {
+                    "diary_result/${selectedDiaryDate.year}/${selectedDiaryDate.monthValue}/${selectedDiaryDate.dayOfMonth}"
+                )   {
                     launchSingleTop = true
                 }
                 diaryViewModel.resetWriteCompleted()
@@ -124,7 +124,7 @@ fun DiaryWriteScreen(
     }
 
     LaunchedEffect(Unit) {
-        suggestionViewModel.fetchSuggestion(token, "", todayStr)
+        suggestionViewModel.fetchSuggestion(token, "", diaryDateStr)
         lastSuggestedText = ""
     }
 
@@ -140,7 +140,7 @@ fun DiaryWriteScreen(
             typingDelayProgress = elapsed / 3000f
         }
         if (text != lastSuggestedText) {
-            suggestionViewModel.fetchSuggestion(token, text, todayStr)
+            suggestionViewModel.fetchSuggestion(token, text, diaryDateStr)
             lastSuggestedText = text
         }
         typingDelayProgress = 0f
@@ -196,8 +196,6 @@ fun DiaryWriteScreen(
                 Button(
                     onClick = {
                         coroutineScope.launch {
-                            val todayStr = LocalDate.now().toString()
-
                             val newImageFiles = imageUris.filter { !it.toString().startsWith("http") }
                                 .mapNotNull { uri ->
                                     try {
@@ -222,6 +220,7 @@ fun DiaryWriteScreen(
                             )
 
                             val allFiles = downloadedFiles + newImageFiles
+                            val diaryDateStr = diaryDate.toString()
 
                             if (isEditMode && diaryId != null) {
                                 diaryViewModel.updateDiaryWithImages(
@@ -236,7 +235,7 @@ fun DiaryWriteScreen(
                                 diaryViewModel.createDiaryWithImages(
                                     token = token,
                                     rawDiary = text,
-                                    diaryDate = todayStr,
+                                    diaryDate = diaryDateStr,
                                     imageFiles = allFiles,
                                     onSuccess = { println("✅ 작성 완료") },
                                     onFailure = { println("❌ 작성 실패: $it") }
@@ -321,7 +320,7 @@ fun DiaryWriteScreen(
                     // 앞에 아이콘
                     IconButton(
                         onClick = {
-                            suggestionViewModel.fetchSuggestion(token, text, todayStr)
+                            suggestionViewModel.fetchSuggestion(token, text, diaryDateStr)
                             lastSuggestedText = text
                         },
                         modifier = Modifier
