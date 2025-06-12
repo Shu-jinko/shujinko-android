@@ -1,8 +1,6 @@
 package com.shujinko.app.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,18 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.shujinko.app.navigation.DiaryNavHost
 import com.shujinko.app.navigation.HomeNavHost
 import com.shujinko.app.ui.theme.*
 import com.shujinko.app.viewmodel.DiaryViewModel
 import com.shujinko.app.viewmodel.UserViewModel
-import java.time.LocalDate
 
 @Composable
 fun MainScreen(

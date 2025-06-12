@@ -20,8 +20,6 @@ import com.shujinko.app.ui.screen.StatisticsScreen
 import com.shujinko.app.viewmodel.StatisticsViewModel
 import com.shujinko.app.viewmodel.SuggestionViewModel
 import java.net.URLDecoder
-import java.time.temporal.WeekFields
-
 
 @Composable
 fun HomeNavHost(
@@ -152,7 +150,8 @@ fun HomeNavHost(
                 day = day,
                 token = token,
                 diaryViewModel = diaryViewModel,
-                navController = homeNavController
+                navController = homeNavController,
+                parentNavController = parentNavController
             )
         }
     }

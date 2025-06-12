@@ -3,22 +3,13 @@ package com.shujinko.app.data.Item
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import com.google.gson.Gson
-import okhttp3.Headers
 import org.json.JSONObject
 import java.io.File
-
-// DTOs
 
 data class DiaryRequest(
     val rawDiary: String,
     val diaryDate: String
-)
-
-data class DiaryUpdate(
-    val rawDiary: String
 )
 
 data class DiaryResponse(
@@ -55,7 +46,6 @@ fun createDiaryMultipartParts(
     diaryDateText: String,
     imageFiles: List<File>
 ): Pair<MultipartBody.Part, List<MultipartBody.Part>> {
-    // JSON 문자열을 RequestBody로 만든 후, MultipartBody.Part로 감쌈
     val diaryJson = JSONObject().apply {
         put("rawDiary", rawDiaryText)
         put("diaryDate", diaryDateText)

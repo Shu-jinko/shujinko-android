@@ -1,13 +1,9 @@
 package com.shujinko.app.navigation
 
 import android.util.Log
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -95,15 +91,41 @@ fun DiaryNavHost(
 
         composable("diary_result") {
             val today = LocalDate.now()
-            DiaryResultScreen(
+                DiaryResultScreen(
                 year = today.year,
                 month = today.monthValue,
                 day = today.dayOfMonth,
                 token = token,
                 diaryViewModel = diaryViewModel,
-                navController = diaryNavController
+                navController = diaryNavController,
+                parentNavController = parentNavController
             )
         }
+
+        // DiaryNavHost 안에 이거 추가!
+        composable(
+            route = "diary_result/{year}/{month}/{day}",
+            arguments = listOf(
+                navArgument("year") { type = NavType.IntType },
+                navArgument("month") { type = NavType.IntType },
+                navArgument("day") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val year = backStackEntry.arguments?.getInt("year") ?: return@composable
+            val month = backStackEntry.arguments?.getInt("month") ?: return@composable
+            val day = backStackEntry.arguments?.getInt("day") ?: return@composable
+
+            DiaryResultScreen(
+                year = year,
+                month = month,
+                day = day,
+                token = token,
+                diaryViewModel = diaryViewModel,
+                navController = diaryNavController,
+                parentNavController = parentNavController
+            )
+        }
+
 
         composable(
             "diary_edit/{id}/{year}/{month}/{day}/{rawDiary}",

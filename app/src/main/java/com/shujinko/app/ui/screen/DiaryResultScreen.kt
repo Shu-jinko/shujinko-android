@@ -1,5 +1,6 @@
 package com.shujinko.app.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,19 +42,22 @@ fun DiaryResultScreen(
     day: Int,
     token: String,
     diaryViewModel: DiaryViewModel,
-    navController: NavController
+    navController: NavController,
+    parentNavController: NavController
 ) {
     val diary by diaryViewModel.todayDiary.collectAsState()
     val error by diaryViewModel.errorMessage.collectAsState()
     var showRaw by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    var navigateEdit by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         diaryViewModel.getDiary(token, year, month, day)
     }
-
-    var navigateEdit by remember { mutableStateOf(false) }
 
     diary?.let { currentDiary ->
         if (navigateEdit) {
@@ -69,26 +73,77 @@ fun DiaryResultScreen(
         }
     }
 
+    /** 삭제 다이얼로그 **/
     if (showDeleteDialog && diary != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("일기 삭제") },
-            text = { Text("${year}년 ${month}월 ${day}일 일기를 정말 삭제하시겠습니까?") },
+            title = {
+                Text(
+                    text = "일기를 삭제할까요?",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "${year}년 ${month}월 ${day}일의 일기를 삭제하면 복구할 수 없어요.\n정말 삭제하시겠어요?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     diaryViewModel.deleteDiary(token, diary!!.diaryId) {
                         showDeleteDialog = false
-                        navController.popBackStack()
+                        Toast.makeText(context, "일기가 삭제되었어요.", Toast.LENGTH_SHORT).show()
+                        parentNavController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 }) {
-                    Text("삭제", color = Color.Red)
+                    Text("삭제", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text("취소")
                 }
-            }
+            },
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    /** 수정 다이얼로그 **/
+    if (showEditDialog && diary != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = {
+                Text(
+                    text = "일기를 수정할까요?",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "${year}년 ${month}월 ${day}일의 일기를 수정할 수 있어요.\n바꾸시겠어요?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showEditDialog = false
+                    navigateEdit = true
+                }) {
+                    Text("수정")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("취소")
+                }
+            },
+            shape = RoundedCornerShape(16.dp)
         )
     }
 
@@ -244,37 +299,35 @@ fun DiaryResultScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
-                        onClick = { navigateEdit = true },
+                        onClick = { showEditDialog = true }, // ✅ 변경
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("수정하기")
                     }
+
                     Button(
-                        onClick = { showDeleteDialog = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        onClick = { showDeleteDialog = true } // ✅ 변경
                     ) {
-                        Text("삭제하기", color = Color.White)
+                        Text("삭제하기")
                     }
-                    Spacer(modifier = Modifier.height(64.dp))
+                }
+
+                Spacer(modifier = Modifier.height(64.dp))
                 }
             }
         }
     }
-}
+
 
 fun getEmotionEmoji(emotion: String): String {
     return when (emotion) {
         "슬픔" -> "😢"
         "분노" -> "😡"
-        "죄책감" -> "😞"
         "기대감" -> "🤩"
-        "불쾌함" -> "😖"
-        "두려움" -> "😱"
+        "불안" -> "😱"
         "놀람" -> "😲"
-        "사랑" -> "❤️"
         "기쁨" -> "😊"
-        "수치심" -> "😳"
+        "평온함" -> "😌"
         else -> "🙂"
     }
 }
@@ -290,16 +343,13 @@ fun EmotionPieChart(
     val total = filtered.sumOf { it.score.toDouble() }.toFloat()
 
     val colors = listOf(
-        Color(0xFF2196F3), // 기쁨
-        Color(0xFF9C27B0), // 슬픔
+        Color(0xFF2196F3), // 슬픔
         Color(0xFFF44336), // 분노
-        Color(0xFF795548), // 두려움
+        Color(0xFFFFEB3B), // 기대감
+        Color(0xFF795548), // 불안
         Color(0xFFFF9800), // 놀람
-        Color(0xFF607D8B), // 불쾌함
-        Color(0xFF3F51B5), // 죄책감
-        Color(0xFF4CAF50), // 사랑
-        Color(0xFF673AB7), // 수치심
-        Color(0xFFFFEB3B)  // 기대감
+        Color(0xFF4CAF50), // 기쁨
+        Color(0xFF9C27B0), // 평온함
     )
 
     val emotionMap = filtered.zip(colors)

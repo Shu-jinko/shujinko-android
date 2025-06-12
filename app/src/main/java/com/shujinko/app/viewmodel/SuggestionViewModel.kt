@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shujinko.app.data.Item.SuggestionRequest
-import com.shujinko.app.data.Item.SuggestionResponse
 import com.shujinko.app.data.remote.SuggestionService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
