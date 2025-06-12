@@ -110,7 +110,7 @@ fun DiaryNavHost(
             arguments = listOf(
                 navArgument("id") { type = NavType.StringType },
                 navArgument("year") { type = NavType.StringType },
-                navArgument("month") { type = NavType.StringType },
+                navArgument("month") { type = NavType.StringType }, 
                 navArgument("day") { type = NavType.StringType },
                 navArgument("rawDiary") { type = NavType.StringType }
             )
