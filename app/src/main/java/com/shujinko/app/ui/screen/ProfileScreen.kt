@@ -1,6 +1,7 @@
 package com.shujinko.app.ui.screen
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.shujinko.app.R
 import com.shujinko.app.navigation.Screen
 import com.shujinko.app.ui.components.TopTitle
@@ -50,13 +52,6 @@ fun ProfileScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "내 정보",
-                fontSize = 22.sp,
-                fontFamily = Pretendard,
-                color = PrimaryPurple
-            )
-
             Spacer(modifier = Modifier.height(24.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -65,23 +60,24 @@ fun ProfileScreen(
                     .fillMaxWidth()
             ) {
                 photoUrl?.let {
-                    val safeUrl = if (it.contains("googleusercontent")) "$it?sz=200" else it
-                    val painter = rememberAsyncImagePainter(model = safeUrl)
-                    val painterState = painter.state
+                    val safeUrl = if (it.contains("googleusercontent")) {
+                        if (it.contains("?")) "$it&sz=400" else "$it?sz=400"
+                    } else it
 
-                    if (painterState is AsyncImagePainter.State.Error) {
-                        Image(
-                            painter = painterResource(id = R.drawable.default_user),
-                            contentDescription = "기본 이미지",
-                            modifier = Modifier.size(80.dp).clip(CircleShape)
-                        )
-                    } else {
-                        Image(
-                            painter = painter,
-                            contentDescription = "프로필 이미지",
-                            modifier = Modifier.size(80.dp).clip(CircleShape)
-                        )
-                    }
+                    val painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(safeUrl)
+                            .crossfade(true)
+                            .placeholder(R.drawable.default_user)
+                            .error(R.drawable.default_user)
+                            .build()
+                    )
+
+                    Image(
+                        painter = painter,
+                        contentDescription = "프로필 이미지",
+                        modifier = Modifier.size(120.dp).clip(CircleShape)
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -91,31 +87,64 @@ fun ProfileScreen(
                 }
             }
 
-            Text(
-                text = "이메일: ${email ?: "불러오는 중..."}",
-                fontSize = 16.sp,
-                fontFamily = Pretendard
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.outlinedCardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "이메일",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = email ?: "불러오는 중...",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 이름 입력
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("이름") },
-                modifier = Modifier.fillMaxWidth()
+                label = {
+                    Text(
+                        "이름",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // 생일 입력
             OutlinedTextField(
                 value = birthday,
                 onValueChange = { birthday = it },
-                label = { Text("생일 (YYYY-MM-DD)") },
-                modifier = Modifier.fillMaxWidth()
+                label = {
+                    Text(
+                        "생일 (YYYY-MM-DD)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(80.dp))
 
             Button(
                 onClick = {
@@ -141,7 +170,7 @@ fun ProfileScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
                 onClick = {
@@ -158,6 +187,7 @@ fun ProfileScreen(
             ) {
                 Text("로그아웃", fontFamily = Pretendard, fontSize = 16.sp)
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 
