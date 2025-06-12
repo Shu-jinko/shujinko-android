@@ -4,15 +4,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.shujinko.app.ui.components.HomeActionCard
-import com.shujinko.app.ui.components.S_Card
 import com.shujinko.app.ui.components.TopTitle
 import com.shujinko.app.viewmodel.StatisticsViewModel
 import java.time.LocalDate
 import java.time.temporal.WeekFields
+import com.google.accompanist.pager.*
+import com.shujinko.app.data.Item.EmotionStat
+import com.shujinko.app.data.Item.KeywordStat
+import com.shujinko.app.ui.theme.Pretendard
+import kotlinx.coroutines.launch
+import kotlin.collections.sortedByDescending
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,14 +34,6 @@ fun HomeScreen(
     val day30Emotions by viewModel.day30Emotions.collectAsState()
     val day7Keywords by viewModel.day7Keywords.collectAsState()
     val day30Keywords by viewModel.day30Keywords.collectAsState()
-
-    var isWeekly by remember { mutableStateOf(true) }
-
-    val emotions = if (isWeekly) day7Emotions else day30Emotions
-    val keywords = if (isWeekly) day7Keywords else day30Keywords    
-
-    val topEmotions = emotions.sortedByDescending { it.count }.take(3)
-    val topKeywords = keywords.sortedByDescending { it.count }.take(3)
 
     val today = LocalDate.now()
     val weekNumber = today.get(WeekFields.ISO.weekOfMonth())
@@ -80,52 +79,23 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 토글 버튼
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(
-                    onClick = { isWeekly = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isWeekly) MaterialTheme.colorScheme.primary else Color.LightGray
-                    )
-                ) {
-                    Text("최근 7일")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
-                    onClick = { isWeekly = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!isWeekly) MaterialTheme.colorScheme.primary else Color.LightGray
-                    )
-                ) {
-                    Text("최근 30일")
-                }
-            }
+            Text(
+                text = "TOP RANKING",
+                style = MaterialTheme.typography.titleMedium
+            )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            StatisticsTabSection(
+                day7Emotions = day7Emotions,
+                day30Emotions = day30Emotions,
+                day7Keywords = day7Keywords,
+                day30Keywords = day30Keywords,
+                getEmotionEmoji = ::getEmotionEmoji
+            )
 
-            // 감정/키워드 카드
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                S_Card(
-                    title = "Mood Analysis",
-                    content = topEmotions.joinToString("\n") { "${getEmotionEmoji(it.emotion)} ${it.emotion}" }
-                )
-                S_Card(
-                    title = "Frequent Keywords",
-                    content = topKeywords.joinToString("\n") { it.keyword }
-                )
-            }
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // 기존 버튼 대신 아래로 교체
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 32.dp)
@@ -144,3 +114,135 @@ fun HomeScreen(
         }
     }
 }
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun StatisticsTabSection(
+    day7Emotions: List<EmotionStat>,
+    day30Emotions: List<EmotionStat>,
+    day7Keywords: List<KeywordStat>,
+    day30Keywords: List<KeywordStat>,
+    getEmotionEmoji: (String) -> String
+) {
+    val titles = listOf("최근 7일", "최근 30일")
+    val pagerState = rememberPagerState()
+    val scope = rememberCoroutineScope()
+
+    Column {
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            indicator = {}
+        ) {
+            titles.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                    text = {
+                        Text(
+                            text = title,
+                            color = if (pagerState.currentPage == index)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                Color.Gray,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalPager(
+            count = 2,
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val emotions = if (page == 0) day7Emotions else day30Emotions
+            val keywords = if (page == 0) day7Keywords else day30Keywords
+
+            val topEmotions = emotions.sortedByDescending { it.count }.take(2)
+            val topKeywords = keywords.sortedByDescending { it.count }.take(2)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (topEmotions.isEmpty() && topKeywords.isEmpty()) {
+                // 아무것도 없을 때
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(120.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.LightGray)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "작성된 일기가 없어요",
+                            color = Color.DarkGray,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            } else {
+                // 원래 카드들
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    StyledInfoCard(
+                        title = "감정 비율",
+                        contents = topEmotions.map { "${getEmotionEmoji(it.emotion)} ${it.emotion} (${it.count}회)" },
+                        backgroundColor = Color(0xFF7C83FD),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    StyledInfoCard(
+                        title = "키워드 빈도",
+                        contents = topKeywords.map { "${it.keyword} (${it.count}회)" },
+                        backgroundColor = Color(0xFFFFC75F),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+    @Composable
+    fun StyledInfoCard(
+        title: String,
+        contents: List<String>,
+        backgroundColor: Color,
+        modifier: Modifier = Modifier
+    ) {
+        Card(
+            modifier = modifier.height(140.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = backgroundColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    fontFamily = Pretendard
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    contents.take(3).forEachIndexed { index, line ->
+                        Text(
+                            text = "${index + 1}위. $line",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White,
+                            fontFamily = Pretendard
+                        )
+                    }
+                }
+            }
+        }
+    }

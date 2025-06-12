@@ -12,11 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.shujinko.app.R
@@ -110,7 +108,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 이름 입력
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -128,7 +125,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 생일 입력
             OutlinedTextField(
                 value = birthday,
                 onValueChange = { birthday = it },

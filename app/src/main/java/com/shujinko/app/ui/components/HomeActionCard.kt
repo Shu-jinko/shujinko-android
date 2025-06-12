@@ -23,8 +23,9 @@ fun HomeActionCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
-            .clickable(onClick = onClick)
+            .height(80.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
@@ -32,16 +33,26 @@ fun HomeActionCard(
                 .padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = emoji,
-                fontSize = 28.sp,
-                modifier = Modifier.padding(end = 16.dp)
-            )
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = emoji,
+                        fontSize = 20.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                fontSize = 18.sp,
-                fontFamily = Pretendard
+                fontFamily = Pretendard,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

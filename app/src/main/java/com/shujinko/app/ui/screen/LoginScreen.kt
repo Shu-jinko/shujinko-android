@@ -7,26 +7,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-import com.shujinko.app.ui.theme.Pretendard
-import com.shujinko.app.ui.theme.PrimaryPurple
 import com.shujinko.app.util.provideGoogleSignInOptions
 import com.shujinko.app.viewmodel.LoginViewModel
 import com.shujinko.app.R
@@ -74,15 +65,13 @@ fun LoginScreen(viewModel: LoginViewModel, onLoginSuccess: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
     ) {
-        // 배경 이미지
         Image(
             painter = painterResource(id = R.drawable.login_screen),
             contentDescription = null,
-            contentScale = ContentScale.Crop, // 또는 Fit 등 설정 가능
+            contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
-        // 버튼만 오버레이로
         Column(
             modifier = Modifier
                 .fillMaxSize()
