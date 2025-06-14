@@ -268,13 +268,20 @@ fun HorizontalWeekCalendar(
     val screenWidth = (LocalConfiguration.current.screenWidthDp.dp - 45.dp)
 
     // ✅ 스크롤 위치 기반 selectedDate 업데이트
+    var hasScrolledOnce by remember { mutableStateOf(false) }
+
     LaunchedEffect(listState.firstVisibleItemIndex) {
-        val weekStart = currentWeekStart.plusWeeks((listState.firstVisibleItemIndex - initialWeekIndex).toLong())
-        val middleDate = weekStart.plusDays(3) // 수요일
-        if (middleDate != selectedDate) {
-            onDateSelected(middleDate)
+        if (hasScrolledOnce) {
+            val weekStart = currentWeekStart.plusWeeks((listState.firstVisibleItemIndex - initialWeekIndex).toLong())
+            val middleDate = weekStart.plusDays(3)
+            if (middleDate != selectedDate) {
+                onDateSelected(middleDate)
+            }
+        } else {
+            hasScrolledOnce = true
         }
     }
+
 
     LazyRow(
         state = listState,
@@ -362,14 +369,20 @@ fun HorizontalMonthCalendar(
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val screenWidth = (LocalConfiguration.current.screenWidthDp.dp - 45.dp)
 
-    // ✅ 스크롤 위치 기반으로 selectedDate 자동 갱신
+    var hasScrolledOnce by remember { mutableStateOf(false) }
+
     LaunchedEffect(listState.firstVisibleItemIndex) {
-        val centerMonth = YearMonth.now().plusMonths((listState.firstVisibleItemIndex - initialIndex).toLong())
-        val middleOfMonth = centerMonth.atDay(15) // 15일 기준으로 선택
-        if (middleOfMonth != selectedDate) {
-            onDateSelected(middleOfMonth)
+        if (hasScrolledOnce) {
+            val centerMonth = YearMonth.now().plusMonths((listState.firstVisibleItemIndex - initialIndex).toLong())
+            val middleOfMonth = centerMonth.atDay(15)
+            if (middleOfMonth != selectedDate) {
+                onDateSelected(middleOfMonth)
+            }
+        } else {
+            hasScrolledOnce = true
         }
     }
+
 
     // 🎯 초기 월로 스크롤 정렬
     LaunchedEffect(Unit) {

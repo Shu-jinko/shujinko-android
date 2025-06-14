@@ -1,6 +1,7 @@
 package com.shujinko.app.ui.screen
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -8,8 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shujinko.app.viewmodel.DiaryViewModel
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,6 +28,7 @@ import coil.ImageLoader
 import coil.compose.LocalImageLoader
 import coil.compose.rememberAsyncImagePainter
 import com.shujinko.app.data.Item.Emotion
+import com.shujinko.app.ui.components.TopTitle
 import okhttp3.OkHttpClient
 import java.net.URLEncoder
 import kotlin.math.cos
@@ -50,9 +50,7 @@ fun DiaryResultScreen(
     var showRaw by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
     val context = LocalContext.current
-
     var navigateEdit by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -73,23 +71,11 @@ fun DiaryResultScreen(
         }
     }
 
-    /** 삭제 다이얼로그 **/
     if (showDeleteDialog && diary != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = {
-                Text(
-                    text = "일기를 삭제할까요?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "${year}년 ${month}월 ${day}일의 일기를 삭제하면 복구할 수 없어요.\n정말 삭제하시겠어요?",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
+            title = { Text("일기를 삭제할까요?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            text = { Text("${year}년 ${month}월 ${day}일의 일기를 삭제하면 복구할 수 없어요.\n정말 삭제하시겠어요?", style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
                 TextButton(onClick = {
                     diaryViewModel.deleteDiary(token, diary!!.diaryId) {
@@ -100,59 +86,35 @@ fun DiaryResultScreen(
                             launchSingleTop = true
                         }
                     }
-                }) {
-                    Text("삭제", color = MaterialTheme.colorScheme.error)
-                }
+                }) { Text("삭제", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("취소")
-                }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("취소") }
             },
             shape = RoundedCornerShape(16.dp)
         )
     }
 
-    /** 수정 다이얼로그 **/
     if (showEditDialog && diary != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            title = {
-                Text(
-                    text = "일기를 수정할까요?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "${year}년 ${month}월 ${day}일의 일기를 수정할 수 있어요.\n바꾸시겠어요?",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
+            title = { Text("일기를 수정할까요?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            text = { Text("${year}년 ${month}월 ${day}일의 일기를 수정할 수 있어요.\n바꾸시겠어요?", style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
                 TextButton(onClick = {
                     showEditDialog = false
                     navigateEdit = true
-                }) {
-                    Text("수정")
-                }
+                }) { Text("수정") }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false }) {
-                    Text("취소")
-                }
+                TextButton(onClick = { showEditDialog = false }) { Text("취소") }
             },
             shape = RoundedCornerShape(16.dp)
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    TopTitle(
+        title = "일기 정리",
     ) {
         when {
             diary == null && error == null -> {
@@ -166,12 +128,14 @@ fun DiaryResultScreen(
             diary != null -> {
                 val it = diary!!
                 val emotionIcon = getEmotionEmoji(it.emotions.maxByOrNull { e -> e.score }?.emotion ?: "")
-                Text("${year}년 ${month}월 ${day}일 나의 하루 $emotionIcon", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("${year}년 ${month}월 ${day}일, 나의 하루 $emotionIcon", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
+                Spacer(modifier = Modifier.height(12.dp))
+                    
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     it.paragraph.forEachIndexed { index, paragraph ->
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            // Timeline 점 + 선
+                            // 타임라인 점과 선
                             Column(
                                 modifier = Modifier.padding(top = 12.dp).width(20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -193,7 +157,6 @@ fun DiaryResultScreen(
 
                             Spacer(modifier = Modifier.width(8.dp))
 
-                            // 본문 카드
                             Card(
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp),
@@ -212,7 +175,6 @@ fun DiaryResultScreen(
                                     if (!paragraph.matched_image.isNullOrBlank()) {
                                         val fileName = paragraph.matched_image.substringAfterLast("/")
                                         val imageUrl = "http://43.201.212.34:8080/diary/images/$fileName"
-                                        val context = LocalContext.current
                                         val imageLoader = remember {
                                             ImageLoader.Builder(context)
                                                 .okHttpClient {
@@ -241,10 +203,10 @@ fun DiaryResultScreen(
                                                 )
                                             }
                                         }
-                                        paragraph.image_caption?.let {
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(it, fontSize = 12.sp, color = Color.Gray)
-                                        }
+//                                        paragraph.image_caption?.let {
+//                                            Spacer(modifier = Modifier.height(4.dp))
+//                                            Text(it, fontSize = 12.sp, color = Color.Gray)
+//                                        }
                                     }
                                 }
                             }
@@ -252,71 +214,155 @@ fun DiaryResultScreen(
                     }
                 }
 
-                Text("요약:", fontSize = 16.sp)
-                Text(
-                    text = it.summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(8.dp)
-                )
-                Text("주요 키워드:", fontSize = 16.sp)
-                val groupedKeywords = it.keywords.groupBy { keyword -> keyword.label }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text("요약", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFF3F5FF)  // 부드러운 연보라
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Text(
+                        text = it.summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text("주요 키워드", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val groupedKeywords = it.keywords.groupBy { k -> k.label }
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     groupedKeywords.forEach { (label, keywords) ->
-                        Column {
-                            Text(text = label, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                keywords.forEach { keyword ->
-                                    AssistChip(onClick = {}, label = { Text(keyword.text) })
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3F5FF))
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = label, // 예: 감정, 활동, 장소 등
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    keywords.forEach { keyword ->
+                                        AssistChip(
+                                            onClick = {},
+                                            label = {
+                                                Text(text = "#${keyword.text}")
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                Text("감정 분석 (비율):", fontSize = 16.sp)
-                EmotionPieChart(emotions = it.emotions)
+                Spacer(modifier = Modifier.height(24.dp))
 
+                Text("감정 분석", fontSize = 16.sp, fontWeight = FontWeight.Bold)
 
+                Spacer(modifier = Modifier.height(12.dp))
 
-                Button(onClick = { showRaw = !showRaw }) {
-                    Text(if (showRaw) "원본 숨기기" else "원본 보기")
-                }
-                if (showRaw) {
-                    Text(
-                        text = it.rawDiary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(8.dp)
-                    )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8EAFE))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        EmotionPieChart(emotions = it.emotions)
+
+                        // 비율 표기 추가
+                        it.emotions
+                            .filter { e -> e.score > 0 }
+                            .sortedByDescending { e -> e.score }
+                            .forEach { emotion ->
+                                val emoji = getEmotionEmoji(emotion.emotion)
+                                val percent = (emotion.score * 100).toInt()
+                                Text(
+                                    text = "$emoji ${emotion.emotion} ${percent}%",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(vertical = 2.dp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = { showEditDialog = true }, // ✅ 변경
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("수정하기")
-                    }
 
-                    Button(
-                        onClick = { showDeleteDialog = true } // ✅ 변경
+                OutlinedButton(
+                    onClick = { showRaw = !showRaw },
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Text(text = if (showRaw) "원본 숨기기" else "원본 보기")
+                }
+
+                AnimatedVisibility(visible = showRaw) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("삭제하기")
+                        Text(
+                            text = it.rawDiary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(64.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = { showEditDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Text("수정하기", color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Text("삭제하기", color = Color.White)
                 }
             }
         }
     }
+}
+
 
 
 fun getEmotionEmoji(emotion: String): String {
@@ -342,58 +388,66 @@ fun EmotionPieChart(
     val filtered = emotions.filter { it.score > 0 }
     val total = filtered.sumOf { it.score.toDouble() }.toFloat()
 
-    val colors = listOf(
-        Color(0xFF2196F3), // 슬픔
-        Color(0xFFF44336), // 분노
-        Color(0xFFFFEB3B), // 기대감
-        Color(0xFF795548), // 불안
-        Color(0xFFFF9800), // 놀람
-        Color(0xFF4CAF50), // 기쁨
-        Color(0xFF9C27B0), // 평온함
+    val emotionColorMap = mapOf(
+        "슬픔" to Color(0xFF90CAF9),
+        "분노" to Color(0xFFEF9A9A),
+        "기대감" to Color(0xFFFFF59D),
+        "불안" to Color(0xFFCE93D8),
+        "놀람" to Color(0xFFFFCC80),
+        "기쁨" to Color(0xFFA5D6A7),
+        "평온함" to Color(0xFFB0BEC5)
     )
 
-    val emotionMap = filtered.zip(colors)
+    val emotionMap = filtered.map { it to (emotionColorMap[it.emotion] ?: Color.Gray) }
 
     Canvas(modifier = modifier.height(300.dp).fillMaxWidth()) {
+        val centerX = size.width / 2
+        val centerY = size.height / 2
+
         var startAngle = -90f
 
         emotionMap.forEach { (emotion, color) ->
-            val sweep = ((emotion.score / total) * 360f).toFloat()  // <-- 여기!
+            val sweep = ((emotion.score / total) * 360f).toFloat()
             drawArc(
                 color = color,
                 startAngle = startAngle,
                 sweepAngle = sweep,
                 useCenter = true,
-                topLeft = Offset(size.width / 2 - radius, 40f),
+                topLeft = Offset(centerX - radius, centerY - radius),
                 size = Size(radius * 2, radius * 2)
             )
             startAngle += sweep
         }
 
-        // 감정 이름 레이블
         var labelAngle = -90f
         emotionMap.forEach { (emotion, _) ->
             val sweep = ((emotion.score / total) * 360f).toFloat()
-            val angle = labelAngle + sweep / 2
-            val rad = Math.toRadians(angle.toDouble())
+            val percent = (emotion.score * 100).toInt()
+            if (percent >= 30) {
+                val angle = labelAngle + sweep / 2
+                val rad = Math.toRadians(angle.toDouble())
 
-            val labelX = (size.width / 2 + cos(rad) * (radius + 20)).toFloat()
-            val labelY = (40 + radius + sin(rad) * (radius + 20)).toFloat()
+                val labelX = (centerX + cos(rad) * (radius + 20)).toFloat()
+                val labelY = (centerY + sin(rad) * (radius + 20)).toFloat()
 
-            drawIntoCanvas {
-                it.nativeCanvas.drawText(
-                    "${emotion.emotion} (${(emotion.score * 100).toInt()}%)",
-                    labelX,
-                    labelY,
-                    android.graphics.Paint().apply {
-                        textAlign = android.graphics.Paint.Align.CENTER
-                        textSize = 30f
-                        color = android.graphics.Color.BLACK
-                    }
-                )
+                drawIntoCanvas {
+                    it.nativeCanvas.drawText(
+                        "${emotion.emotion} $percent%",
+                        labelX,
+                        labelY,
+                        android.graphics.Paint().apply {
+                            textAlign = android.graphics.Paint.Align.CENTER
+                            textSize = 36f
+                            isFakeBoldText = true
+                            color = android.graphics.Color.DKGRAY
+                        }
+                    )
+                }
             }
-
             labelAngle += sweep
         }
     }
+
 }
+
+

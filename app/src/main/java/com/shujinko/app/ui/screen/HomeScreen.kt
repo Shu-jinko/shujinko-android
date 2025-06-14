@@ -2,6 +2,10 @@ package com.shujinko.app.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -9,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.shujinko.app.ui.components.HomeActionCard
 import com.shujinko.app.ui.components.TopTitle
 import com.shujinko.app.viewmodel.StatisticsViewModel
@@ -58,26 +63,43 @@ fun HomeScreen(
     }
 
     TopTitle(title = "DAYKEEPER") {
-        Column(
-        ) {
+        Column {
             Text(
                 text = "오늘 하루도 수고했어요 ☕",
                 style = MaterialTheme.typography.titleMedium
             )
+
             Spacer(modifier = Modifier.height(12.dp))
+
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth()
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
-                Text(
-                    text = summary?.sentence ?: "한 문장 요약을 불러오는 중...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "💬 오늘의 한 문장",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "“ ${summary?.sentence ?: "한 문장 요약을 불러오는 중..."} ”",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 22.sp
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(modifier = Modifier.height(32.dp))
+
 
             Text(
                 text = "TOP RANKING",
@@ -92,27 +114,29 @@ fun HomeScreen(
                 getEmotionEmoji = ::getEmotionEmoji
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 32.dp)
             ) {
                 HomeActionCard(
-                    emoji = "📊",
+                    icon = Icons.Default.BarChart,
                     title = "일기 통계 보기",
                     onClick = onClickStats
                 )
+
                 HomeActionCard(
-                    emoji = "🗓️",
+                    icon = Icons.Default.CalendarMonth,
                     title = "일기 달력 보기",
                     onClick = onClickCalendar
                 )
             }
         }
     }
+
 }
 
 @OptIn(ExperimentalPagerApi::class)
@@ -164,8 +188,8 @@ fun StatisticsTabSection(
             val emotions = if (page == 0) day7Emotions else day30Emotions
             val keywords = if (page == 0) day7Keywords else day30Keywords
 
-            val topEmotions = emotions.sortedByDescending { it.count }.take(2)
-            val topKeywords = keywords.sortedByDescending { it.count }.take(2)
+            val topEmotions = emotions.sortedByDescending { it.count }.take(3)
+            val topKeywords = keywords.sortedByDescending { it.count }.take(3)
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -196,14 +220,14 @@ fun StatisticsTabSection(
                     StyledInfoCard(
                         title = "감정 비율",
                         contents = topEmotions.map { "${getEmotionEmoji(it.emotion)} ${it.emotion} (${it.count}회)" },
-                        backgroundColor = Color(0xFF7C83FD),
+                        backgroundColor = Color(0xFFB6BAF2),
                         modifier = Modifier.weight(1f)
                     )
 
                     StyledInfoCard(
                         title = "키워드 빈도",
                         contents = topKeywords.map { "${it.keyword} (${it.count}회)" },
-                        backgroundColor = Color(0xFFFFC75F),
+                        backgroundColor = Color(0xFFD9BFFF  ),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -223,7 +247,7 @@ fun StatisticsTabSection(
             modifier = modifier.height(140.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(

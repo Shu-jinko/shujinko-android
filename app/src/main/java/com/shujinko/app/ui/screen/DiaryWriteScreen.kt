@@ -147,7 +147,7 @@ fun DiaryWriteScreen(
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
-            Toast.makeText(context, "일기 작성에 문제가 발생했습니다. 관리자에 문의해주세요", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(context, "일기 작성에 문제가 발생했습니다. 관리자에 문의해주세요", Toast.LENGTH_SHORT).show()
         }
     }
     LaunchedEffect(suggestionError) {
