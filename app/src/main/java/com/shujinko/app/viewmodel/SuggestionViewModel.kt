@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shujinko.app.data.Item.SuggestionRequest
-import com.shujinko.app.data.Item.SuggestionResponse
 import com.shujinko.app.data.remote.SuggestionService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,14 +25,14 @@ class SuggestionViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    fun fetchSuggestion(token: String, rawDiary: String) {
+    fun fetchSuggestion(token: String, rawDiary: String, diaryDate: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             try {
                 val response = suggestionService.createSuggestion(
                     token = "Bearer $token",
-                    request = SuggestionRequest(rawDiary)
+                    request = SuggestionRequest(rawDiary = rawDiary, diaryDate = diaryDate)
                 )
                 if (response.isSuccessful) {
                     val body = response.body()

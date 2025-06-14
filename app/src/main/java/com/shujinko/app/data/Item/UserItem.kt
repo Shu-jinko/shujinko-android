@@ -3,6 +3,7 @@ package com.shujinko.app.data.Item
 data class User(
     val email: String,
     val name: String,
+    val photoUrl: String,
     val birthday: String
 )
 

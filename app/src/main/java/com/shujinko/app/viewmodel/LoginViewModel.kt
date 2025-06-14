@@ -8,10 +8,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.shujinko.app.data.remote.CalendarService
 import com.shujinko.app.data.repository.AuthRepository
+import com.shujinko.app.utils.TokenStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -21,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val calendarService: CalendarService
 ) : ViewModel() {
 
     private val _account = MutableLiveData<GoogleSignInAccount?>()
@@ -41,7 +45,8 @@ class LoginViewModel @Inject constructor(
         _account.value = account
     }
 
-    fun firebaseAuthWithGoogle(account: GoogleSignInAccount, onResult: (Boolean, String?) -> Unit) {
+    // ✅ 콜백 시그니처 변경: authCode도 같이 넘기기
+    fun firebaseAuthWithGoogle(account: GoogleSignInAccount, onResult: (Boolean, String?, String?) -> Unit) {
         _isLoading.value = true
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
 
@@ -49,23 +54,27 @@ class LoginViewModel @Inject constructor(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val idToken = account.idToken
-                    Log.d("Login", "Firebase 인증 성공, idToken: $idToken")
+                    val authCode = account.serverAuthCode  // ✅ Calendar API용
+                    Log.d("Login", "Firebase 인증 성공, idToken: $idToken, authCode: $authCode")
                     _isLoading.value = false
-                    onResult(true, idToken)
+                    onResult(true, idToken, authCode) // ✅ authCode 전달
                 } else {
                     Log.e("Login", "Firebase 인증 실패", task.exception)
                     _isLoading.value = false
-                    onResult(false, null)
+                    onResult(false, null, null) // ✅ 실패 시 null
                 }
             }
     }
 
-    fun sendTokenToServer(idToken: String, birthday: String?, onComplete: (Boolean) -> Unit) {
+
+    // ✅ authCode 인자로 추가
+    fun sendTokenToServer(idToken: String, authCode: String?, birthday: String?, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val result = authRepository.login(context, idToken, birthday)
+            val result = authRepository.login(context, idToken, authCode, birthday) // ✅ 수정됨
             onComplete(result)
         }
     }
+
 
     fun tryAutoLogin(onSuccess: () -> Unit, onFail: () -> Unit) {
         viewModelScope.launch {
@@ -137,4 +146,26 @@ class LoginViewModel @Inject constructor(
             null
         }
     }
+
+    fun syncGoogleCalendar() {
+        viewModelScope.launch {
+            try {
+                val token = TokenStore.getAccessToken(context).firstOrNull()
+                if (!token.isNullOrBlank()) {
+                    val bearer = "Bearer $token"
+                    val response = calendarService.loadCalendar(bearer)
+                    if (response.isSuccessful) {
+                        Log.d("Calendar", "✅ 구글 캘린더 연동 성공")
+                    } else {
+                        Log.e("Calendar", "❌ 캘린더 연동 실패: ${response.code()}")
+                    }
+                } else {
+                    Log.e("Calendar", "❌ 토큰 없음")
+                }
+            } catch (e: Exception) {
+                Log.e("Calendar", "❌ 캘린더 연동 예외 발생", e)
+            }
+        }
+    }
+
 }

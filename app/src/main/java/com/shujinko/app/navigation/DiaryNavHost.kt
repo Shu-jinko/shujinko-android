@@ -1,13 +1,9 @@
 package com.shujinko.app.navigation
 
 import android.util.Log
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -95,27 +91,57 @@ fun DiaryNavHost(
 
         composable("diary_result") {
             val today = LocalDate.now()
-            DiaryResultScreen(
+                DiaryResultScreen(
                 year = today.year,
                 month = today.monthValue,
                 day = today.dayOfMonth,
                 token = token,
                 diaryViewModel = diaryViewModel,
-                navController = diaryNavController
+                navController = diaryNavController,
+                parentNavController = parentNavController
             )
         }
+
+        // DiaryNavHost 안에 이거 추가!
+        composable(
+            route = "diary_result/{year}/{month}/{day}",
+            arguments = listOf(
+                navArgument("year") { type = NavType.IntType },
+                navArgument("month") { type = NavType.IntType },
+                navArgument("day") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val year = backStackEntry.arguments?.getInt("year") ?: return@composable
+            val month = backStackEntry.arguments?.getInt("month") ?: return@composable
+            val day = backStackEntry.arguments?.getInt("day") ?: return@composable
+
+            DiaryResultScreen(
+                year = year,
+                month = month,
+                day = day,
+                token = token,
+                diaryViewModel = diaryViewModel,
+                navController = diaryNavController,
+                parentNavController = parentNavController
+            )
+        }
+
 
         composable(
             "diary_edit/{id}/{year}/{month}/{day}/{rawDiary}",
             arguments = listOf(
                 navArgument("id") { type = NavType.StringType },
                 navArgument("year") { type = NavType.StringType },
-                navArgument("month") { type = NavType.StringType },
+                navArgument("month") { type = NavType.StringType }, 
                 navArgument("day") { type = NavType.StringType },
                 navArgument("rawDiary") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toLongOrNull() ?: return@composable
+            val year = backStackEntry.arguments?.getString("year")?.toIntOrNull() ?: return@composable
+            val month = backStackEntry.arguments?.getString("month")?.toIntOrNull() ?: return@composable
+            val day = backStackEntry.arguments?.getString("day")?.toIntOrNull() ?: return@composable
+            val diaryDate = LocalDate.of(year, month, day)
             val rawDiary = backStackEntry.arguments?.getString("rawDiary") ?: ""
             val suggestionViewModel: SuggestionViewModel = hiltViewModel()
 
@@ -127,8 +153,10 @@ fun DiaryNavHost(
                 isEditMode = true,
                 initialText = URLDecoder.decode(rawDiary, "UTF-8"),
                 diaryId = id,
+                diaryDate = diaryDate, // ✅ 여기 추가됨
                 parentNavController = parentNavController
             )
         }
+
     }
 }
